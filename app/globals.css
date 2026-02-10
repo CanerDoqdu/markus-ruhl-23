@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=Raleway:wght@100;200;300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-ptsans: 'PT Sans', sans-serif;
+    --font-raleway: 'Raleway', sans-serif;
+  }
+  
+  * {
+    @apply border-gray-800;
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply bg-main text-white font-ptsans overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(88, 103, 182, 0.1);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #FFFF92, #5867B6);
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #5867B6, #FFFF92);
+    box-shadow: 0 0 10px rgba(88, 103, 182, 0.5);
+  }
+
+  /* Selection styles */
+  ::selection {
+    background-color: #5867B6;
+    color: #FFFF92;
+  }
+
+  ::-moz-selection {
+    background-color: #5867B6;
+    color: #FFFF92;
+  }
+
+  /* Grain overlay */
+  .grain-overlay {
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    opacity: 0.03;
+    z-index: 9999;
+    /* background-image: url('/assets/textures/grain.png'); */
+    /* Uncomment above when you add grain texture (512x512 PNG) */
+    background-repeat: repeat;
+  }
+
+  /* Cinematic text */
+  .text-cinematic {
+    @apply text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter leading-none;
+  }
+
+  /* Glow effect */
+  .glow-text-yellow {
+    text-shadow: 0 0 20px rgba(255, 255, 146, 0.5),
+                 0 0 40px rgba(255, 255, 146, 0.3);
+  }
+
+  .glow-text-blue {
+    text-shadow: 0 0 20px rgba(88, 103, 182, 0.5),
+                 0 0 40px rgba(88, 103, 182, 0.3);
+  }
+}
