@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import Image from "next/image"
 import Heading from "@/components/shared/Heading"
 import Button from "@/components/shared/Button"
 import StaggerContainer, { StaggerItem } from "@/components/motion/StaggerContainer"
@@ -11,18 +12,21 @@ const PROGRAMS = [
     description: "High-volume training for maximum muscle growth",
     intensity: "Advanced",
     features: ["6 days/week", "Heavy compounds", "Progressive overload"],
+    image: "/assets/images/magazine 2.jpg",
   },
   {
     title: "POWER CORE",
     description: "Build foundational strength and power",
     intensity: "Intermediate",
     features: ["4 days/week", "Strength focus", "Compound movements"],
+    image: "/assets/images/images.jpeg",
   },
   {
     title: "BEGINNER PATH",
     description: "Master the fundamentals of bodybuilding",
     intensity: "Beginner",
     features: ["3 days/week", "Form mastery", "Build base strength"],
+    image: "/assets/images/i.webp",
   },
 ]
 
@@ -49,10 +53,21 @@ export default function TrainingPreview() {
                 className="relative group h-full"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-yellow/10 to-blue/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-                <div className="relative h-full p-8 border border-gray-800 rounded-2xl bg-main/80 backdrop-blur-sm group-hover:border-yellow/50 transition-all duration-500 flex flex-col">
-                  <span className="text-xs font-bold text-yellow tracking-widest mb-4">
-                    {program.intensity.toUpperCase()}
-                  </span>
+                <div className="relative h-full border border-gray-800 rounded-2xl bg-main/80 backdrop-blur-sm group-hover:border-yellow/50 transition-all duration-500 flex flex-col overflow-hidden">
+                  {/* Card image */}
+                  <div className="relative h-48 w-full overflow-hidden">
+                    <Image
+                      src={program.image}
+                      alt={program.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-main via-main/40 to-transparent" />
+                    <span className="absolute bottom-3 left-4 text-xs font-bold text-yellow tracking-widest">
+                      {program.intensity.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="p-8 flex flex-col flex-grow">
                   <h3 className="text-2xl font-bold text-white mb-4">
                     {program.title}
                   </h3>
@@ -67,6 +82,7 @@ export default function TrainingPreview() {
                       </li>
                     ))}
                   </ul>
+                  </div>
                 </div>
               </motion.div>
             </StaggerItem>

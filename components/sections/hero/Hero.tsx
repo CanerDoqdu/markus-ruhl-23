@@ -28,19 +28,33 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
       )
       camera.position.set(0, 0, 500)
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-      renderer.setPixelRatio(window.devicePixelRatio)
-      renderer.setSize(window.innerWidth, window.innerHeight)
+      const renderer = new THREE.WebGLRenderer({ 
+        antialias: true, 
+        alpha: true,
+        powerPreference: "high-performance"
+      })
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      
+      // Set size to container, not full window
+      const rect = container.getBoundingClientRect()
+      renderer.setSize(rect.width || window.innerWidth, rect.height || window.innerHeight)
       renderer.setClearColor(0x0a0c13, 1)
+      
+      renderer.domElement.style.position = "absolute"
+      renderer.domElement.style.top = "0"
+      renderer.domElement.style.left = "0"
       container.appendChild(renderer.domElement)
 
-      // Video texture
+      // Video texture with highest quality settings
       const texture = new THREE.VideoTexture(video)
-      texture.minFilter = THREE.NearestFilter
+      texture.minFilter = THREE.LinearFilter
+      texture.magFilter = THREE.LinearFilter
+      texture.format = THREE.RGBAFormat
       texture.generateMipmaps = false
+      texture.needsUpdate = true
 
-      const width = 160
-      const height = 120
+      const width = 320
+      const height = 240
       const nearClipping = 850
       const farClipping = 4000
 
@@ -94,17 +108,20 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
           float minc = min(min(color.r, color.g), color.b);
           float saturation = maxc - minc;
 
-          float lumaMask = smoothstep(0.25, 0.75, luminance);
-          float satMask = smoothstep(0.05, 0.25, saturation);
+          // Enhanced masking for better quality
+          float lumaMask = smoothstep(0.20, 0.80, luminance);
+          float satMask = smoothstep(0.03, 0.30, saturation);
           float alpha = lumaMask * satMask;
 
           // Remove very bright white regions
           float isWhite = step(0.92, luminance) * (1.0 - step(0.1, saturation));
           if (isWhite > 0.5) discard;
-          if (alpha < 0.05) discard;
+          if (alpha < 0.03) discard;
 
+          // Enhanced yellow tint with better brightness
           vec3 tint = vec3(1.0, 1.0, 0.0);
-          gl_FragColor = vec4(tint * luminance, alpha * 0.9);
+          float enhancedLuminance = pow(luminance, 0.85);
+          gl_FragColor = vec4(tint * enhancedLuminance, alpha * 0.95);
         }
       `
 
@@ -131,16 +148,10 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
 
       const center = new THREE.Vector3(0, 0, -1000)
 
-      // Animation loop
-      let frameCount = 0
+      // Animation loop - smooth 60fps rendering
       const animate = () => {
         requestAnimationFrame(animate)
-
-        frameCount++
-        if (frameCount % 2 !== 0) return
-
         camera.lookAt(center)
-
         renderer.render(scene, camera)
       }
 
@@ -152,9 +163,13 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
       onReady?.()
 
       const handleResize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight
+        const rect = container.getBoundingClientRect()
+        const width = rect.width || window.innerWidth
+        const height = rect.height || window.innerHeight
+        
+        camera.aspect = width / height
         camera.updateProjectionMatrix()
-        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.setSize(width, height)
       }
 
       window.addEventListener("resize", handleResize)
@@ -182,8 +197,7 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
         crossOrigin="anonymous"
         style={{ display: "none" }}
       >
-        <source src="/assets/videos/markus-hologram.mp4" type="video/mp4" />
-        <source src="/assets/videos/markus-hologram.webm" type="video/webm" />
+        <source src="/assets/markus-assest/videos/marcusVideo.mp4" type="video/mp4" />
       </video>
     </>
   )
@@ -254,15 +268,12 @@ export default function Hero() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="hidden lg:flex flex-col items-center"
+              className="hidden lg:flex flex-col items-center justify-center"
             >
-              <Image
-                src="/assets/righttext.svg"
-                alt="Text"
-                width={300}
-                height={500}
-                className="h-auto w-full max-w-sm drop-shadow-2xl"
-              />
+              <p className="text-lg text-white font-bold text-center" style={{ fontFamily: 'Arial, sans-serif' }}>
+                one of the biggest "mass monster" <br />
+                bodybuilders who ever lived.
+              </p>
             </motion.div>
           </div>
         </div>
