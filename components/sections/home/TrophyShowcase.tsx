@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 
 const TrophyCanvas = dynamic(() => import("./TrophyCanvas"), {
@@ -24,6 +25,18 @@ const FEATURES = [
 ]
 
 export default function TrophyShowcase() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
   // Check if model exists — we use the fallback image if not
   // The Canvas version activates when a .glb is placed in the trophies folder
 
@@ -128,7 +141,7 @@ export default function TrophyShowcase() {
               </motion.div>
             </div>
 
-            {/* CENTER — 3D Trophy (rotating GLB model) */}
+            {/* CENTER — 3D Trophy (rotating GLB model) - Desktop only */}
             <div className="lg:col-span-4 h-[500px] lg:h-[600px] relative">
               {/* Glow rings behind trophy */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -142,12 +155,34 @@ export default function TrophyShowcase() {
                   animate={{ rotate: -360 }}
                   transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
                 />
+                {/* Outer ring passing through bottom of stand */}
+                <motion.div
+                  className="absolute w-[550px] h-[550px] rounded-full border border-[#FFFF92]/[0.07] translate-y-[60px]"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                />
                 <div
                   className="absolute w-[300px] h-[300px] rounded-full"
                   style={{ background: "radial-gradient(circle, rgba(255,255,146,0.06) 0%, transparent 70%)" }}
                 />
               </div>
-              <TrophyCanvas />
+              
+              {/* 3D Canvas for desktop, placeholder for mobile */}
+              {!isMobile ? (
+                <TrophyCanvas />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="text-8xl"
+                  >
+                    🏆
+                  </motion.div>
+                </div>
+              )}
             </div>
 
             {/* RIGHT — Feature list (like ChainGPT token features) */}

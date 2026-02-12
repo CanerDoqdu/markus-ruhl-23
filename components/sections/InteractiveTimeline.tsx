@@ -86,7 +86,7 @@ export default function InteractiveTimeline() {
       />
 
       {/* Gradient orbs */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#FFFF92]/5 rounded-full blur-[150px]" />
+      <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-[#FFFF92]/5 rounded-full blur-[150px]" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#5867B6]/5 rounded-full blur-[120px]" />
 
       <div className="relative z-10 max-w-[1400px] mx-auto">

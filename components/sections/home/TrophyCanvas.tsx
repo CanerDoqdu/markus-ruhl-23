@@ -2,194 +2,171 @@
 
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
-// @ts-expect-error — three/examples is untyped
+// @ts-expect-error three/examples is untyped
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
-// @ts-expect-error — three/examples is untyped
+// @ts-expect-error three/examples is untyped
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils"
 
 const BODY_PATH   = "/assets/trophy_body_opt.glb"
 const PLINTH_PATH = "/assets/trophy_plinth_opt.glb"
 
-/* ── Tessellate into tetrahedra with gap shrinkage ── */
-function createFragmentGeometry(srcGeo: THREE.BufferGeometry): THREE.BufferGeometry {
-  const src = srcGeo.index ? srcGeo.toNonIndexed() : srcGeo.clone()
-  src.computeVertexNormals()
-  const p = src.getAttribute("position")
-  const triCount = Math.floor(p.count / 3)
-  const totalVerts = triCount * 12
-  const positions = new Float32Array(totalVerts * 3)
-  const timeArr   = new Float32Array(totalVerts)
-  const seedArr   = new Float32Array(totalVerts)
-  const dnArr     = new Float32Array(totalVerts * 3)
+/* Same tetrahedron fragmentation as three.js pointlights example */
+function createGeometry(srcGeo: THREE.BufferGeometry): THREE.BufferGeometry {
+  const geometry = srcGeo.index ? srcGeo.toNonIndexed() : srcGeo.clone()
+  const posAttr = geometry.getAttribute("position")
 
-  const v0 = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3()
-  const v3 = new THREE.Vector3(), norm = new THREE.Vector3()
+  const v0 = new THREE.Vector3()
+  const v1 = new THREE.Vector3()
+  const v2 = new THREE.Vector3()
+  const v3 = new THREE.Vector3()
+  const n  = new THREE.Vector3()
   const plane = new THREE.Plane()
-  const SHRINK = 0.88
-  let vi = 0, ai = 0
 
-  for (let i = 0; i < p.count; i += 3) {
-    v0.fromBufferAttribute(p, i)
-    v1.fromBufferAttribute(p, i + 1)
-    v2.fromBufferAttribute(p, i + 2)
+  const verts: number[] = []
+  const times: number[] = []
+  const seeds: number[] = []
+  const dNormals: number[] = []
+
+  // Take every triangle - simple wireframe
+  const step = 1
+
+  for (let i = 0; i < posAttr.count; i += 3 * step) {
+    if (i + 2 >= posAttr.count) break
+    
+    v0.fromBufferAttribute(posAttr, i)
+    v1.fromBufferAttribute(posAttr, i + 1)
+    v2.fromBufferAttribute(posAttr, i + 2)
+
     plane.setFromCoplanarPoints(v0, v1, v2)
+
+    // No subdivision - keep original triangles
     v3.copy(v0).add(v1).add(v2).divideScalar(3)
-    v3.add(norm.copy(plane.normal).multiplyScalar(-0.08))
+    v3.add(n.copy(plane.normal).multiplyScalar(-0.001))
 
-    const cx = (v0.x + v1.x + v2.x + v3.x) * 0.25
-    const cy = (v0.y + v1.y + v2.y + v3.y) * 0.25
-    const cz = (v0.z + v1.z + v2.z + v3.z) * 0.25
+    // Original triangle only
+    verts.push(v0.x,v0.y,v0.z, v1.x,v1.y,v1.z, v2.x,v2.y,v2.z)
 
-    const faces = [v0,v1,v2, v3,v1,v0, v3,v2,v1, v3,v0,v2]
-    const t = Math.random(), s = Math.random()
-    const nx = plane.normal.x, ny = plane.normal.y, nz = plane.normal.z
+    const t = Math.random()
+    const s = Math.random()
+    n.copy(plane.normal)
 
-    for (let f = 0; f < 12; f++) {
-      const vert = faces[f]
-      positions[vi]     = cx + (vert.x - cx) * SHRINK
-      positions[vi + 1] = cy + (vert.y - cy) * SHRINK
-      positions[vi + 2] = cz + (vert.z - cz) * SHRINK
-      dnArr[vi]     = nx
-      dnArr[vi + 1] = ny
-      dnArr[vi + 2] = nz
-      vi += 3
-      timeArr[ai] = t
-      seedArr[ai] = s
-      ai++
-    }
+    for (let j = 0; j < 3; j++) { times.push(t); seeds.push(s) }
+    dNormals.push(n.x,n.y,n.z, n.x,n.y,n.z, n.x,n.y,n.z)
   }
 
   const geo = new THREE.BufferGeometry()
-  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3))
-  geo.setAttribute("aTime", new THREE.BufferAttribute(timeArr, 1))
-  geo.setAttribute("aSeed", new THREE.BufferAttribute(seedArr, 1))
-  geo.setAttribute("aDisplaceNormal", new THREE.BufferAttribute(dnArr, 3))
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3))
+  geo.setAttribute("aTime", new THREE.Float32BufferAttribute(times, 1))
+  geo.setAttribute("aSeed", new THREE.Float32BufferAttribute(seeds, 1))
+  geo.setAttribute("aDisplaceNormal", new THREE.Float32BufferAttribute(dNormals, 3))
   geo.computeVertexNormals()
-  src.dispose()
+  
+  // Position-based vertex colors + barycentric for wireframe
+  geo.computeBoundingSphere()
+  const range = geo.boundingSphere!.radius * 2.0
+  const colors: number[] = []
+  const bary: number[] = []
+  
+  for (let i = 0; i < verts.length; i += 9) {
+    // Each triangle's 3 vertices
+    for (let j = 0; j < 3; j++) {
+      const idx = i + j * 3
+      const x = verts[idx]
+      const y = verts[idx + 1]
+      const z = verts[idx + 2]
+      
+      // Gold colors
+      const intensity = (Math.abs(x / range) + Math.abs(y / range) + Math.abs(z / range)) / 3.0
+      colors.push(0.82, 0.58, 0.12) // Rich warm gold
+      
+      // Barycentric coords for wireframe
+      if (j === 0) bary.push(1, 0, 0)
+      else if (j === 1) bary.push(0, 1, 0)
+      else bary.push(0, 0, 1)
+    }
+  }
+  
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3))
+  geo.setAttribute("barycentric", new THREE.Float32BufferAttribute(bary, 3))
+  
+  geometry.dispose()
   return geo
 }
 
-/* ── Shared uniforms — both materials reference the same objects ── */
-const sharedUniforms = {
-  uTime: { value: 0 },
-  uL1:   { value: new THREE.Vector3() },
-  uL2:   { value: new THREE.Vector3() },
-  uC1:   { value: new THREE.Color(0xffff92) },
-  uC2:   { value: new THREE.Color(0x5867b6) },
-}
+/* Phong-like material with vertex displacement (same logic as example) */
+function createMaterial(light1: THREE.PointLight, light2: THREE.PointLight) {
+  const uniforms = {
+    uTime:  { value: 0 },
+    uL1:    { value: light1.position },
+    uL2:    { value: light2.position },
+    uC1:    { value: light1.color },
+    uC2:    { value: light2.color },
+    uInv:   { value: new THREE.Matrix4() },
+  }
 
-/* ── Fragment shader material (body) ── */
-function createMaterial() {
-  return new THREE.ShaderMaterial({
-    uniforms: {
-      ...sharedUniforms,
-      uInv: { value: new THREE.Matrix4() },
-    },
-    vertexShader: /* glsl */ `
+  const mat = new THREE.ShaderMaterial({
+    uniforms,
+    vertexShader: /* glsl */`
       attribute float aTime;
       attribute float aSeed;
       attribute vec3 aDisplaceNormal;
+      attribute vec3 color;
+      attribute vec3 barycentric;
       uniform float uTime;
       uniform vec3 uL1, uL2;
       uniform mat4 uInv;
-      varying vec3 vN, vW;
-      varying float vD;
+      varying vec3 vN, vW, vColor, vBary;
+      varying float vDisplace;
+
       void main() {
         vN = normalize(normalMatrix * normal);
+        vColor = color;
+        vBary = barycentric;
         float lt = aTime + uTime;
-        vec3 l1 = (uInv * vec4(uL1,1.0)).xyz;
-        vec3 l2 = (uInv * vec4(uL2,1.0)).xyz;
-        float r = 0.8;
-        float d1 = max(0.0, r - distance(position,l1)) / 15.0;
-        float d2 = max(0.0, r - distance(position,l2)) / 15.0;
-        float s = abs(sin(lt*2.0+aSeed)*0.015) + d1 + d2;
-        vD = s;
-        vec4 wp = modelMatrix * vec4(position + aDisplaceNormal * s, 1.0);
+
+        // light positions in model-local space
+        vec3 l1 = (uInv * vec4(uL1, 1.0)).xyz;
+        vec3 l2 = (uInv * vec4(uL2, 1.0)).xyz;
+
+        // Subtle displacement
+        float d1 = max(0.0, 2.0 - distance(position, l1)) / 30.0;
+        float d2 = max(0.0, 2.0 - distance(position, l2)) / 30.0;
+        float s = abs(sin(lt * 2.0 + aSeed) * 0.008) + d1 + d2;
+        vDisplace = s;
+
+        vec3 displaced = position + aDisplaceNormal * s;
+        vec4 wp = modelMatrix * vec4(displaced, 1.0);
         vW = wp.xyz;
         gl_Position = projectionMatrix * viewMatrix * wp;
       }
     `,
-    fragmentShader: /* glsl */ `
+    fragmentShader: /* glsl */`
       uniform float uTime;
-      uniform vec3 uL1, uL2, uC1, uC2;
-      varying vec3 vN, vW;
-      varying float vD;
+      uniform vec3 uL1, uL2;
+      uniform vec3 uC1, uC2;
+      varying vec3 vN, vW, vColor, vBary;
+      varying float vDisplace;
+
+      float edgeFactor() {
+        // Big wireframe
+        float minBary = min(min(vBary.x, vBary.y), vBary.z);
+        return smoothstep(0.0, 0.03, minBary);
+      }
+
       void main() {
         vec3 n = normalize(vN);
         vec3 viewDir = normalize(cameraPosition - vW);
-        vec3 reflDir = reflect(-viewDir, n);
-        float fresnel = 1.0 - max(dot(n, viewDir), 0.0);
-        fresnel *= fresnel; // pow 2.0 without pow()
 
-        vec3 t1 = uL1-vW, t2 = uL2-vW;
-        float a1 = 60.0/(dot(t1,t1)+1.0);
-        float a2 = 60.0/(dot(t2,t2)+1.0);
-        vec3 ld1 = normalize(t1), ld2 = normalize(t2);
+        // Rich gold base
+        vec3 c = vColor;
 
-        float diff1 = max(dot(n, ld1), 0.0);
-        float diff2 = max(dot(n, ld2), 0.0);
-
-        vec3 h1 = normalize(ld1 + viewDir);
-        vec3 h2 = normalize(ld2 + viewDir);
-        float spec1 = pow(max(dot(n, h1), 0.0), 64.0);
-        float spec2 = pow(max(dot(n, h2), 0.0), 64.0);
-
-        vec3 c = vec3(0.005, 0.006, 0.01);
-        vec3 goldTint = vec3(1.0, 0.85, 0.4);
-        c += uC1 * goldTint * diff1 * 0.15 * a1;
-        c += uC2 * goldTint * diff2 * 0.08 * a2;
-
-        vec3 specColor = vec3(1.0, 0.95, 0.7);
-        c += specColor * spec1 * 0.5 * a1;
-        c += specColor * spec2 * 0.3 * a2;
-
-        // Fake env reflection
-        float y = reflDir.y * 0.5 + 0.5;
-        vec3 sky = mix(vec3(0.01, 0.015, 0.04), vec3(0.03, 0.04, 0.08), y);
-        sky += vec3(0.08, 0.07, 0.12) * exp(-abs(reflDir.y) * 8.0) * 0.15;
-        c += sky * goldTint * (0.15 + fresnel * 0.3);
-
-        vec3 rimColor = uC1 * a1 * 0.6 + uC2 * a2 * 0.4;
-        c += rimColor * fresnel * 0.35;
-        c += rimColor * smoothstep(0.0, 0.12, vD) * 0.1;
-
-        c *= 0.95 + 0.05 * sin(uTime * 1.5);
-        c = c * (2.51 * c + 0.03) / (c * (2.43 * c + 0.59) + 0.14);
-        gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
-      }
-    `,
-    side: THREE.FrontSide,
-  })
-}
-
-/* ── Solid plinth material — same lighting, no displacement ── */
-function createPlinthMaterial() {
-  return new THREE.ShaderMaterial({
-    uniforms: { ...sharedUniforms },
-    vertexShader: /* glsl */ `
-      varying vec3 vN, vW;
-      void main() {
-        vN = normalize(normalMatrix * normal);
-        vec4 wp = modelMatrix * vec4(position, 1.0);
-        vW = wp.xyz;
-        gl_Position = projectionMatrix * viewMatrix * wp;
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform float uTime;
-      uniform vec3 uL1, uL2, uC1, uC2;
-      varying vec3 vN, vW;
-      void main() {
-        vec3 n = normalize(vN);
-        vec3 viewDir = normalize(cameraPosition - vW);
-        vec3 reflDir = reflect(-viewDir, n);
-        float fresnel = 1.0 - max(dot(n, viewDir), 0.0);
-        fresnel = fresnel * fresnel * fresnel; // pow 3.0
-
-        vec3 t1 = uL1-vW, t2 = uL2-vW;
-        float a1 = 60.0/(dot(t1,t1)+1.0);
-        float a2 = 60.0/(dot(t2,t2)+1.0);
-        vec3 ld1 = normalize(t1), ld2 = normalize(t2);
+        // Lighting
+        vec3 t1 = uL1 - vW;
+        vec3 t2 = uL2 - vW;
+        float att1 = 12.0 / (dot(t1, t1) + 1.0);
+        float att2 = 12.0 / (dot(t2, t2) + 1.0);
+        vec3 ld1 = normalize(t1);
+        vec3 ld2 = normalize(t2);
 
         float diff1 = max(dot(n, ld1), 0.0);
         float diff2 = max(dot(n, ld2), 0.0);
@@ -199,35 +176,104 @@ function createPlinthMaterial() {
         float spec1 = pow(max(dot(n, h1), 0.0), 80.0);
         float spec2 = pow(max(dot(n, h2), 0.0), 80.0);
 
-        vec3 c = vec3(0.008, 0.009, 0.015);
-        vec3 goldTint = vec3(1.0, 0.85, 0.4);
-        c += uC1 * goldTint * diff1 * 0.18 * a1;
-        c += uC2 * goldTint * diff2 * 0.10 * a2;
+        // Deep ambient for contrast
+        c *= 0.12;
+        // Warm diffuse
+        c += vColor * 1.2 * diff1 * att1;
+        c += vColor * 1.2 * diff2 * att2;
+        // Gold specular (no white)
+        vec3 specGold = vec3(0.75, 0.55, 0.15);
+        c += specGold * spec1 * 0.3 * att1;
+        c += specGold * spec2 * 0.3 * att2;
+        // Fresnel rim for metallic sheen
+        float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 4.0);
+        c += vColor * fresnel * 0.10;
 
-        vec3 specColor = vec3(1.0, 0.95, 0.7);
-        c += specColor * spec1 * 0.6 * a1;
-        c += specColor * spec2 * 0.35 * a2;
+        // Black wireframe
+        float edge = edgeFactor();
+        c = mix(vec3(0.0), c, edge);
 
-        float y = reflDir.y * 0.5 + 0.5;
-        vec3 env = mix(vec3(0.01, 0.015, 0.04), vec3(0.03, 0.04, 0.08), y) * goldTint;
-        c += env * (0.1 + fresnel * 0.25);
+        gl_FragColor = vec4(c, 1.0);
+      }
+    `,
+    side: THREE.FrontSide,
+  })
 
-        vec3 rimColor = uC1 * a1 * 0.5 + uC2 * a2 * 0.5;
-        c += rimColor * fresnel * 0.15;
+  return { mat, uniforms }
+}
 
-        c *= 0.95 + 0.05 * sin(uTime * 1.5);
-        c = c * (2.51 * c + 0.03) / (c * (2.43 * c + 0.59) + 0.14);
-        gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+/* Plinth material: simple colored material */
+function createPlinthMaterial(light1: THREE.PointLight, light2: THREE.PointLight) {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uL1: { value: light1.position },
+      uL2: { value: light2.position },
+    },
+    vertexShader: /* glsl */`
+      varying vec3 vN, vW;
+      varying float vY;
+      void main() {
+        vN = normalize(normalMatrix * normal);
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vW = wp.xyz;
+        vY = position.y;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: /* glsl */`
+      uniform vec3 uL1, uL2;
+      varying vec3 vN, vW;
+      varying float vY;
+      void main() {
+        vec3 n = normalize(vN);
+        vec3 viewDir = normalize(cameraPosition - vW);
+
+        vec3 t1 = uL1 - vW;
+        vec3 t2 = uL2 - vW;
+        float att1 = 16.0 / (dot(t1, t1) + 1.0);
+        float att2 = 16.0 / (dot(t2, t2) + 1.0);
+        vec3 ld1 = normalize(t1);
+        vec3 ld2 = normalize(t2);
+
+        float diff1 = max(dot(n, ld1), 0.0);
+        float diff2 = max(dot(n, ld2), 0.0);
+
+        // Specular for shine
+        vec3 h1 = normalize(ld1 + viewDir);
+        vec3 h2 = normalize(ld2 + viewDir);
+        float spec1 = pow(max(dot(n, h1), 0.0), 80.0);
+        float spec2 = pow(max(dot(n, h2), 0.0), 80.0);
+
+        // Gradient from gold (top) to dark background (bottom)
+        float gradientFactor = smoothstep(-2.0, 2.0, vY);
+        vec3 goldBase = vec3(0.65, 0.42, 0.10);
+        vec3 darkBase = vec3(0.04, 0.05, 0.08);
+        vec3 base = mix(darkBase, goldBase, gradientFactor);
+        
+        vec3 c = base * 0.08;
+        c += base * diff1 * 1.0 * att1;
+        c += base * diff2 * 1.0 * att2;
+
+        // Specular color also gradients
+        vec3 goldSpec = vec3(0.80, 0.60, 0.18);
+        vec3 darkSpec = vec3(0.15, 0.15, 0.20);
+        vec3 specCol = mix(darkSpec, goldSpec, gradientFactor);
+        c += specCol * spec1 * 0.35 * att1;
+        c += specCol * spec2 * 0.35 * att2;
+
+        // Strong fresnel rim
+        float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
+        c += base * fresnel * 0.15;
+
+        gl_FragColor = vec4(c, 1.0);
       }
     `,
     side: THREE.FrontSide,
   })
 }
 
-// Reusable statics — zero per-frame allocation
 const _invMat = new THREE.Matrix4()
-const _lp1 = new THREE.Vector3()
-const _lp2 = new THREE.Vector3()
 
 export default function TrophyCanvas() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -238,52 +284,64 @@ export default function TrophyCanvas() {
 
     const w = el.clientWidth, h = el.clientHeight
 
-    // --- Renderer: max performance ---
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: false,
-      powerPreference: "high-performance",
-      stencil: false,        // unused → save GPU memory
-      depth: true,
-    })
-    renderer.setSize(w, h)
-    renderer.setPixelRatio(1) // always 1x — biggest perf win on HiDPI
-    renderer.autoClear = true
-    renderer.sortObjects = false // we have 2 opaque objects, skip sort
+    let _renderer: THREE.WebGLRenderer | null = null
+    try {
+      _renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+        stencil: false,
+        depth: true,
+      })
+    } catch { return }
+    if (!_renderer) return
+    const renderer = _renderer
+
+    const SCALE = 1.0
+    renderer.setSize(w * SCALE, h * SCALE, false)
+    renderer.domElement.style.width = w + 'px'
+    renderer.domElement.style.height = h + 'px'
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     el.appendChild(renderer.domElement)
 
+    const canvas = renderer.domElement
+    let contextLost = false
+    canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); contextLost = true })
+    canvas.addEventListener("webglcontextrestored", () => { contextLost = false })
+
     const scene = new THREE.Scene()
-    scene.matrixAutoUpdate = false // we manage matrices manually
 
     const cam = new THREE.PerspectiveCamera(35, w / h, 0.1, 100)
     cam.position.set(0, 0.5, 5)
     cam.lookAt(0, 0, 0)
     cam.updateMatrixWorld()
 
-    // --- Light indicator spheres ---
-    const sg = new THREE.SphereGeometry(0.04, 3, 2)
-    const lm1 = new THREE.MeshBasicMaterial({ color: 0xffff92 })
-    const lm2 = new THREE.MeshBasicMaterial({ color: 0x5867b6 })
-    const light1Mesh = new THREE.Mesh(sg, lm1)
-    const light2Mesh = new THREE.Mesh(sg, lm2)
-    light1Mesh.matrixAutoUpdate = true
-    light2Mesh.matrixAutoUpdate = true
-    scene.add(light1Mesh, light2Mesh)
+    // === 2 point lights - gold theme ===
+    const sphereGeo = new THREE.SphereGeometry(0.05, 12, 6)
 
-    const mat = createMaterial()
-    const plinthMat = createPlinthMaterial()
+    const light1 = new THREE.PointLight(0xffd280, 1600)
+    light1.add(new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({ color: 0xffd280 })))
+    scene.add(light1)
 
-    // Pre-compile shaders while loading models (GPU warm-up)
-    renderer.compile(scene, cam)
+    const light2 = new THREE.PointLight(0xffbf60, 1200)
+    light2.add(new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({ color: 0xffbf60 })))
+    scene.add(light2)
 
+    // Subtle warm ambient
+    scene.add(new THREE.AmbientLight(0xffd280, 0.03))
+
+    // === Materials ===
+    const { mat: bodyMat, uniforms } = createMaterial(light1, light2)
+    const plinthMat = createPlinthMaterial(light1, light2)
+
+    // === Trophy group ===
     const loader = new GLTFLoader()
     let mergedMesh: THREE.Mesh | null = null
     let plinthMesh: THREE.Mesh | null = null
     const trophyGroup = new THREE.Group()
     trophyGroup.scale.setScalar(0.8)
-    trophyGroup.position.set(0, -0.1, 0)
+    trophyGroup.position.set(-0.03, -0.1, 0)
     trophyGroup.rotation.x = THREE.MathUtils.degToRad(5)
-    trophyGroup.matrixAutoUpdate = true
 
     let loaded = 0
     const bodyGeos: THREE.BufferGeometry[] = []
@@ -299,8 +357,7 @@ export default function TrophyCanvas() {
 
       const size = new THREE.Vector3()
       combinedBox.getSize(size)
-      const maxDim = Math.max(size.x, size.y, size.z)
-      const scaleFactor = 3.0 / maxDim
+      const scaleFactor = 3.0 / Math.max(size.x, size.y, size.z)
 
       const center = new THREE.Vector3()
       combinedBox.getCenter(center)
@@ -313,9 +370,8 @@ export default function TrophyCanvas() {
         if (bodyMerged) {
           bodyMerged.scale(scaleFactor, scaleFactor, scaleFactor)
           bodyMerged.translate(tx, ty, tz)
-          mergedMesh = new THREE.Mesh(bodyMerged, mat)
+          mergedMesh = new THREE.Mesh(bodyMerged, bodyMat)
           mergedMesh.frustumCulled = false
-          mergedMesh.matrixAutoUpdate = false
           trophyGroup.add(mergedMesh)
         }
       }
@@ -327,7 +383,6 @@ export default function TrophyCanvas() {
           plinthMerged.translate(tx, ty, tz)
           plinthMesh = new THREE.Mesh(plinthMerged, plinthMat)
           plinthMesh.frustumCulled = false
-          plinthMesh.matrixAutoUpdate = false
           trophyGroup.add(plinthMesh)
         }
       }
@@ -335,17 +390,14 @@ export default function TrophyCanvas() {
       bodyGeos.forEach(g => g.dispose())
       plinthGeos.forEach(g => g.dispose())
       scene.add(trophyGroup)
-
-      // Force shader compile with actual geometry now
-      renderer.compile(scene, cam)
     }
 
-    // Body — fragmented
+    // Body: tetrahedron fragmentation
     loader.load(BODY_PATH, (gltf: { scene: THREE.Group }) => {
       gltf.scene.traverse((child: THREE.Object3D) => {
         if ((child as THREE.Mesh).isMesh) {
           const m = child as THREE.Mesh
-          const fragGeo = createFragmentGeometry(m.geometry)
+          const fragGeo = createGeometry(m.geometry)
           m.updateWorldMatrix(true, false)
           fragGeo.applyMatrix4(m.matrixWorld)
           bodyGeos.push(fragGeo)
@@ -355,9 +407,9 @@ export default function TrophyCanvas() {
         }
       })
       onAllLoaded()
-    }, undefined, (err: Error) => { console.error('BODY load error:', err) })
+    }, undefined, (err: Error) => { console.error("BODY load error:", err) })
 
-    // Plinth — solid (keep index buffer for GPU vertex cache)
+    // Plinth: solid
     loader.load(PLINTH_PATH, (gltf: { scene: THREE.Group }) => {
       gltf.scene.traverse((child: THREE.Object3D) => {
         if ((child as THREE.Mesh).isMesh) {
@@ -373,12 +425,14 @@ export default function TrophyCanvas() {
         }
       })
       onAllLoaded()
-    }, undefined, (err: Error) => { console.error('PLINTH load error:', err) })
+    }, undefined, (err: Error) => { console.error("PLINTH load error:", err) })
 
-    // --- Animation loop ---
+    // === Animation loop ===
     const clock = new THREE.Clock()
     let frameId = 0
     let isVisible = true
+    let lastFrame = 0
+    const FRAME_INTERVAL = 1 / 45 // cap 45fps for smoother animation
 
     const observer = new IntersectionObserver(
       ([entry]) => { isVisible = entry.isIntersecting },
@@ -388,31 +442,32 @@ export default function TrophyCanvas() {
 
     function animate() {
       frameId = requestAnimationFrame(animate)
-      if (!isVisible) return
+      if (!isVisible || contextLost) return
 
-      const t = clock.getElapsedTime() * 0.5
+      const now = clock.getElapsedTime()
+      if (now - lastFrame < FRAME_INTERVAL) return
+      lastFrame = now
+
+      const t = now * 0.5
+
+      // slow rotation
       trophyGroup.rotation.y += 0.003
       trophyGroup.updateMatrixWorld()
 
+      // orbit lights around trophy (same pattern as example)
       const r = 2.5
-      _lp1.set(Math.sin(t) * r, Math.cos(t * 0.75) * 1.5, Math.cos(t * 0.5) * r)
-      _lp2.set(-Math.sin(t) * r, -Math.cos(t * 0.75) * 1.5, -Math.cos(t * 0.5) * r)
-      light1Mesh.position.copy(_lp1)
-      light2Mesh.position.copy(_lp2)
+      light1.position.set(Math.sin(t) * r, Math.cos(t * 0.75) * 1.5, Math.cos(t * 0.5) * r)
+      light2.position.set(-Math.sin(t) * r, -Math.cos(t * 0.75) * 1.5, -Math.cos(t * 0.5) * r)
 
-      // Shared uniforms — written once, both materials see it
-      sharedUniforms.uTime.value = t
-      sharedUniforms.uL1.value.copy(_lp1)
-      sharedUniforms.uL2.value.copy(_lp2)
-
+      // update shader uniforms
+      uniforms.uTime.value = t
       _invMat.copy(trophyGroup.matrixWorld).invert()
-      mat.uniforms.uInv.value.copy(_invMat)
+      uniforms.uInv.value.copy(_invMat)
 
       renderer.render(scene, cam)
     }
     animate()
 
-    // Debounced resize — avoids layout thrash
     let resizeTimer = 0
     function onResize() {
       clearTimeout(resizeTimer)
@@ -421,7 +476,9 @@ export default function TrophyCanvas() {
         const nw = el.clientWidth, nh = el.clientHeight
         cam.aspect = nw / nh
         cam.updateProjectionMatrix()
-        renderer.setSize(nw, nh)
+        renderer.setSize(nw * SCALE, nh * SCALE, false)
+        renderer.domElement.style.width = nw + 'px'
+        renderer.domElement.style.height = nh + 'px'
       }, 100)
     }
     window.addEventListener("resize", onResize)
@@ -432,11 +489,9 @@ export default function TrophyCanvas() {
       observer.disconnect()
       window.removeEventListener("resize", onResize)
       renderer.dispose()
-      sg.dispose()
-      lm1.dispose()
-      lm2.dispose()
-      mat.dispose()
+      bodyMat.dispose()
       plinthMat.dispose()
+      sphereGeo.dispose()
       if (mergedMesh) mergedMesh.geometry.dispose()
       if (plinthMesh) plinthMesh.geometry.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)

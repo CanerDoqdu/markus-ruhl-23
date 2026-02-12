@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Image from "next/image"
 import { SOCIAL_LINKS, NAV_LINKS } from "@/lib/constants"
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
@@ -32,31 +31,6 @@ export default function Footer() {
     <footer className="relative bg-main">
       {/* Top border */}
       <div className="h-px bg-gradient-to-r from-transparent via-gray-800/60 to-transparent" />
-
-      {/* ——— Partners strip ——— */}
-      <div className="border-b border-gray-800/30">
-        <div className="max-w-[1400px] mx-auto px-6 py-12">
-          <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-gray-600 text-center mb-8">
-            Trusted Partners
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16">
-            {[1, 2, 3, 4, 5].map((num) => (
-              <div
-                key={num}
-                className="grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-400"
-              >
-                <Image
-                  src={`/assets/img_${num}.svg`}
-                  alt={`Partner ${num}`}
-                  width={110}
-                  height={50}
-                  className="object-contain"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* ——— Main footer ——— */}
       <div className="max-w-[1400px] mx-auto px-6 py-16">

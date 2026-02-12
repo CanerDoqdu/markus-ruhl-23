@@ -12,92 +12,111 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
-    if (!containerRef.current) return
+      if (!containerRef.current) return
 
-    import("three").then((THREE) => {
-      const container = containerRef.current!
-      const video = videoRef.current!
+      import("three").then((THREE) => {
+        const container = containerRef.current!
+        const video = videoRef.current!
 
-      const scene = new THREE.Scene()
-      const camera = new THREE.PerspectiveCamera(
-        50,
-        window.innerWidth / window.innerHeight,
-        1,
-        10000
-      )
-      camera.position.set(0, 0, 500)
+        // Remove old canvas if exists (prevent context limit)
+        Array.from(container.childNodes).forEach(node => {
+          if (node instanceof HTMLCanvasElement) container.removeChild(node)
+        })
 
-      const renderer = new THREE.WebGLRenderer({ 
-        antialias: true, 
-        alpha: true,
-        powerPreference: "high-performance"
-      })
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-      
-      const rect = container.getBoundingClientRect()
-      renderer.setSize(rect.width || window.innerWidth, rect.height || window.innerHeight)
-      renderer.setClearColor(0x0a0c13, 0)
-      
-      renderer.domElement.style.position = "absolute"
-      renderer.domElement.style.top = "0"
-      renderer.domElement.style.left = "0"
-      container.appendChild(renderer.domElement)
+        const scene = new THREE.Scene()
+        const camera = new THREE.PerspectiveCamera(
+          50,
+          window.innerWidth / window.innerHeight,
+          1,
+          10000
+        )
+        camera.position.set(0, 0, 500)
 
-      const texture = new THREE.VideoTexture(video)
-      texture.minFilter = THREE.LinearFilter
-      texture.magFilter = THREE.LinearFilter
-      texture.format = THREE.RGBAFormat
-      texture.generateMipmaps = false
-      texture.needsUpdate = true
-
-      const width = 320
-      const height = 240
-      const nearClipping = 850
-      const farClipping = 4000
-
-      const geometry = new THREE.BufferGeometry()
-      const vertices = new Float32Array(width * height * 3)
-      for (let i = 0, j = 0, l = vertices.length; i < l; i += 3, j++) {
-        vertices[i] = j % width
-        vertices[i + 1] = Math.floor(j / width)
-      }
-      geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3))
-
-      const vertexShader = `
-        uniform sampler2D map;
-        uniform float width;
-        uniform float height;
-        uniform float nearClipping, farClipping;
-        uniform float pointSize;
-        uniform float zOffset;
-        varying vec2 vUv;
-
-        const float XtoZ = 1.11146;
-        const float YtoZ = 0.83359;
-
-        void main() {
-          vUv = vec2( position.x / width, position.y / height );
-          vec4 color = texture2D( map, vUv );
-          float depth = ( color.r + color.g + color.b ) / 3.0;
-
-          float z = ( 1.0 - depth ) * (farClipping - nearClipping) + nearClipping;
-
-          vec4 pos = vec4(
-            ( position.x / width - 0.5 ) * z * XtoZ,
-            ( position.y / height - 0.5 ) * z * YtoZ,
-            - z + zOffset,
-            1.0);
-
-          gl_PointSize = pointSize;
-          gl_Position = projectionMatrix * modelViewMatrix * pos;
+        let renderer: THREE.WebGLRenderer | null = null
+        try {
+          renderer = new THREE.WebGLRenderer({ 
+            antialias: false, 
+            alpha: true,
+            powerPreference: "high-performance",
+            stencil: false,
+          })
+        } catch (e) {
+          try {
+            renderer = new THREE.WebGLRenderer({
+              antialias: false,
+              alpha: true,
+            })
+          } catch (err) {
+            return
+          }
         }
-      `
+        renderer.setPixelRatio(1)
+        const rect = container.getBoundingClientRect()
+        const HERO_SCALE = 0.75
+        renderer.setSize((rect.width || window.innerWidth) * HERO_SCALE, (rect.height || window.innerHeight) * HERO_SCALE, false)
+        renderer.domElement.style.width = (rect.width || window.innerWidth) + 'px'
+        renderer.domElement.style.height = (rect.height || window.innerHeight) + 'px'
+        renderer.setClearColor(0x0a0c13, 0)
+        renderer.domElement.style.position = "absolute"
+        renderer.domElement.style.top = "0"
+        renderer.domElement.style.left = "0"
+        container.appendChild(renderer.domElement)
 
-      const fragmentShader = `
-        uniform sampler2D map;
-        varying vec2 vUv;
+        const texture = new THREE.VideoTexture(video)
+        texture.minFilter = THREE.LinearFilter
+        texture.magFilter = THREE.LinearFilter
+        texture.format = THREE.RGBAFormat
+        texture.generateMipmaps = false
+        texture.needsUpdate = true
 
-        void main() {
+        const width = 320
+        const height = 240
+        const nearClipping = 850
+        const farClipping = 4000
+
+        const geometry = new THREE.BufferGeometry()
+        const vertices = new Float32Array(width * height * 3)
+        for (let i = 0, j = 0, l = vertices.length; i < l; i += 3, j++) {
+          vertices[i] = j % width
+          vertices[i + 1] = Math.floor(j / width)
+        }
+        geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3))
+
+        const vertexShader = `
+          uniform sampler2D map;
+          uniform float width;
+          uniform float height;
+          uniform float nearClipping, farClipping;
+          uniform float pointSize;
+          uniform float zOffset;
+          varying vec2 vUv;
+
+          const float XtoZ = 1.11146;
+          const float YtoZ = 0.83359;
+
+          void main() {
+            vUv = vec2( position.x / width, position.y / height );
+            vec4 color = texture2D( map, vUv );
+            float depth = ( color.r + color.g + color.b ) / 3.0;
+
+            float z = ( 1.0 - depth ) * (farClipping - nearClipping) + nearClipping;
+
+            vec4 pos = vec4(
+              ( position.x / width - 0.5 ) * z * XtoZ,
+              ( position.y / height - 0.5 ) * z * YtoZ,
+              - z + zOffset,
+              1.0);
+
+            gl_PointSize = pointSize;
+            gl_Position = projectionMatrix * modelViewMatrix * pos;
+          }
+        `
+
+        const fragmentShader = `
+          uniform sampler2D map;
+          varying vec2 vUv;
+
+          void main() {
           vec4 color = texture2D( map, vUv );
           float luminance = dot(color.rgb, vec3(0.299, 0.587, 0.114));
           float maxc = max(max(color.r, color.g), color.b);
@@ -141,8 +160,33 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
 
       const center = new THREE.Vector3(0, 0, -1000)
 
+      let heroVisible = true
+      let lastHeroFrame = 0
+      const HERO_INTERVAL = 1 / 30
+      const heroClock = new THREE.Clock()
+
+      const heroObserver = new IntersectionObserver(
+        ([entry]) => { 
+          heroVisible = entry.isIntersecting
+          if (!heroVisible) {
+            video.pause()
+          } else {
+            video.play().catch(() => {})
+          }
+        },
+        { threshold: 0 }
+      )
+      heroObserver.observe(container)
+
+      let heroFrameId = 0
       const animate = () => {
-        requestAnimationFrame(animate)
+        heroFrameId = requestAnimationFrame(animate)
+        if (!heroVisible || !renderer) return
+        
+        const now = heroClock.getElapsedTime()
+        if (now - lastHeroFrame < HERO_INTERVAL) return
+        lastHeroFrame = now
+
         camera.lookAt(center)
         renderer.render(scene, camera)
       }
@@ -152,26 +196,38 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
       animate()
       onReady?.()
 
+      let heroResizeTimer = 0
       const handleResize = () => {
-        const rect = container.getBoundingClientRect()
-        const width = rect.width || window.innerWidth
-        const height = rect.height || window.innerHeight
-        
-        camera.aspect = width / height
-        camera.updateProjectionMatrix()
-        renderer.setSize(width, height)
+        clearTimeout(heroResizeTimer)
+        heroResizeTimer = window.setTimeout(() => {
+          if (!renderer) return
+          const rect = container.getBoundingClientRect()
+          const width = rect.width || window.innerWidth
+          const height = rect.height || window.innerHeight
+          
+          camera.aspect = width / height
+          camera.updateProjectionMatrix()
+          renderer.setSize(width * HERO_SCALE, height * HERO_SCALE, false)
+          renderer.domElement.style.width = width + 'px'
+          renderer.domElement.style.height = height + 'px'
+        }, 150)
       }
 
       window.addEventListener("resize", handleResize)
 
       return () => {
+        cancelAnimationFrame(heroFrameId)
+        clearTimeout(heroResizeTimer)
+        heroObserver.disconnect()
         window.removeEventListener("resize", handleResize)
         try {
-          container.removeChild(renderer.domElement)
+          if (renderer) {
+            container.removeChild(renderer.domElement)
+            renderer.dispose()
+          }
         } catch (e) {}
         geometry.dispose()
         material.dispose()
-        renderer.dispose()
       }
     })
   }, [onReady])
@@ -223,6 +279,8 @@ export default function PremiumHero() {
 
   return (
     <section id="home" className="relative h-screen w-full overflow-hidden bg-[#0a0c13]">
+      {/* Bottom fade to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-main z-30 pointer-events-none" />
       {/* Gradient background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#FFFF92]/5 via-transparent to-[#5867B6]/5" />
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-[#FFFF92]/10 via-transparent to-transparent" />
@@ -243,7 +301,7 @@ export default function PremiumHero() {
       {!isDesktop && (
         <div className="absolute inset-0">
           <Image
-            src="/assets/images/markus-ruhl-bodybuilder-wallpaper-17.jpg"
+            src="/assets/images/d46e04754cfeedcce04c2a2ca3594243.jpg"
             alt="Markus Rühl"
             fill
             className="object-cover opacity-40"

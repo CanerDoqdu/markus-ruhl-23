@@ -10,18 +10,18 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@heroicons/react": "^2.0.18",
+    "@react-three/drei": "^9.114.3",
+    "@react-three/fiber": "^8.17.10",
+    "@studio-freight/lenis": "^1.0.42",
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.0.0",
+    "gsap": "^3.12.5",
     "next": "^15.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@heroicons/react": "^2.0.18",
-    "framer-motion": "^11.0.0",
-    "@react-three/fiber": "^8.17.10",
-    "@react-three/drei": "^9.114.3",
-    "three": "^0.169.0",
-    "gsap": "^3.12.5",
-    "@studio-freight/lenis": "^1.0.42",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.2.0",
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

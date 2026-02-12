@@ -60,7 +60,7 @@ export default function TrainingPreview() {
                       src={program.image}
                       alt={program.title}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="object-contain group-hover:scale-110 transition-transform duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-main via-main/40 to-transparent" />
                     <span className="absolute bottom-3 left-4 text-xs font-bold text-yellow tracking-widest">

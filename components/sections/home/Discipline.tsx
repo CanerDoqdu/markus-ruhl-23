@@ -1,136 +1,204 @@
 "use client"
 
-import Reveal from "@/components/motion/Reveal"
-import StaggerContainer, { StaggerItem } from "@/components/motion/StaggerContainer"
 import { motion } from "framer-motion"
-import Image from "next/image"
+import { useState, useEffect } from "react"
+import Reveal from "@/components/motion/Reveal"
 
-const PRINCIPLES = [
-  { title: "NO SHORTCUTS", desc: "Every rep earned, never given" },
-  { title: "ONLY RESULTS", desc: "Numbers don't lie, neither does the mirror" },
-  { title: "PURE POWER", desc: "Strength beyond limits, mass beyond measure" },
-  { title: "TOTAL COMMITMENT", desc: "24 hours a day, 365 days a year" },
+const steps = [
+  { step: "01", title: "MINDSET", desc: "Mental foundation", color: "#5867B6" },
+  { step: "02", title: "TRAINING", desc: "Heavy compounds", color: "#FFFF92" },
+  { step: "03", title: "NUTRITION", desc: "Fuel the machine", color: "#FF6B35" },
+  { step: "04", title: "RECOVERY", desc: "Rebuild & grow", color: "#22d3ee" },
+  { step: "05", title: "DISCIPLINE", desc: "Daily execution", color: "#5867B6" },
+  { step: "06", title: "RESULTS", desc: "Champion physique", color: "#FFFF92" },
 ]
 
 export default function Discipline() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
   return (
-    <section className="relative min-h-screen bg-main overflow-hidden">
-      {/* Subtle grid background */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
+    <section className="relative bg-main overflow-hidden py-16 lg:py-24">
+      {/* Background grid */}
+      <div 
+        className="absolute inset-0 opacity-[0.02]"
         style={{
-          backgroundImage: `linear-gradient(rgba(255,255,146,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,146,0.4) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
+          backgroundImage: `
+            linear-gradient(rgba(255,255,146,0.5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,146,0.5) 1px, transparent 1px)
+          `,
+          backgroundSize: "80px 80px",
         }}
       />
 
-      <div className="relative max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-screen">
-        {/* Left — Image + overlay text */}
-        <div className="relative hidden lg:block">
-          <div className="sticky top-0 h-screen">
-            <Image
-              src="/assets/images/Markus-Ruhl.06-1.jpg"
-              alt="Markus Rühl"
-              fill
-              className="object-cover grayscale"
-              quality={80}
-            />
-            {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-main/30 via-main/60 to-main" />
-            <div className="absolute inset-0 bg-gradient-to-t from-main via-transparent to-main/80" />
+      <div className="relative max-w-5xl mx-auto px-6">
+        {/* Header */}
 
-            {/* Large "THE CODE" text */}
-            <div className="absolute inset-0 flex flex-col justify-center px-12">
-              <Reveal>
-                <p className="text-xs font-mono uppercase tracking-[0.4em] text-yellow/70 mb-4">
-                  Principles of Iron
-                </p>
-                <h2 className="text-7xl xl:text-8xl 2xl:text-9xl font-black text-white leading-[0.85] tracking-tighter">
-                  THE
-                  <br />
-                  <span className="text-yellow glow-text-yellow">CODE</span>
-                </h2>
-                <div className="mt-6 flex gap-1">
-                  <div className="w-12 h-1 bg-yellow rounded-full" />
-                  <div className="w-6 h-1 bg-blue rounded-full" />
-                  <div className="w-3 h-1 bg-gray-600 rounded-full" />
+        <Reveal>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-3 tracking-tight">
+            The Code
+          </h2>
+          <p className="text-gray-500 text-lg mb-16 max-w-xl">
+            The systematic algorithm behind championship-level mass.
+          </p>
+        </Reveal>
+
+        {/* Algorithm Grid with Arrows */}
+        <div className="relative">
+          {/* SVG Connection Arrows - Desktop only */}
+          <svg className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+            {/* Row 1: 01 -> 02 */}
+            <path d="M 280 60 L 320 60 L 320 60 L 360 60" stroke="#4a4a5a" strokeWidth="1.5" fill="none" />
+            <polygon points="358,56 368,60 358,64" fill="#4a4a5a" />
+            
+            {/* Row 1: 02 -> 03 */}
+            <path d="M 640 60 L 680 60 L 680 60 L 720 60" stroke="#4a4a5a" strokeWidth="1.5" fill="none" />
+            <polygon points="718,56 728,60 718,64" fill="#4a4a5a" />
+            
+            {/* Row 1 to Row 2: 03 -> 04 (corner arrow down) */}
+            <path d="M 900 100 L 900 140 L 900 180" stroke="#4a4a5a" strokeWidth="1.5" fill="none" />
+            <polygon points="896,178 900,188 904,178" fill="#4a4a5a" />
+            
+            {/* Row 2: 04 <- 05 (right to left) */}
+            <path d="M 720 220 L 680 220 L 640 220" stroke="#4a4a5a" strokeWidth="1.5" fill="none" />
+            <polygon points="642,224 632,220 642,216" fill="#4a4a5a" />
+            
+            {/* Row 2: 05 <- 06 */}
+            <path d="M 360 220 L 320 220 L 280 220" stroke="#4a4a5a" strokeWidth="1.5" fill="none" />
+            <polygon points="282,224 272,220 282,216" fill="#4a4a5a" />
+          </svg>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4 relative z-10">
+            {steps.map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                viewport={{ once: true }}
+                className="group"
+              >
+                {/* Small Card with Code-style effect */}
+                <div 
+                  className="relative p-4 rounded-xl border border-gray-800/80 transition-all duration-300 group-hover:border-gray-600 overflow-hidden"
+                  style={{
+                    background: "linear-gradient(145deg, rgba(15,15,18,0.95) 0%, rgba(10,10,12,0.98) 100%)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)",
+                  }}
+                >
+                  {/* Animated scanline effect - Desktop only */}
+                  {!isMobile && (
+                    <motion.div 
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: `repeating-linear-gradient(
+                          0deg,
+                          transparent 0px,
+                          transparent 2px,
+                          ${item.color}08 2px,
+                          ${item.color}08 3px
+                        )`,
+                      }}
+                      animate={{ 
+                        backgroundPosition: ["0px 0px", "0px 10px"],
+                      }}
+                      transition={{ 
+                        duration: 3, 
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    />
+                  )}
+
+                  {/* Corner brackets */}
+                  <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl-sm opacity-40 group-hover:opacity-60 transition-opacity" style={{ borderColor: item.color }} />
+                  <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr-sm opacity-40 group-hover:opacity-60 transition-opacity" style={{ borderColor: item.color }} />
+                  <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl-sm opacity-40 group-hover:opacity-60 transition-opacity" style={{ borderColor: item.color }} />
+                  <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br-sm opacity-40 group-hover:opacity-60 transition-opacity" style={{ borderColor: item.color }} />
+
+                  {/* Content */}
+                  <div className="relative z-10">
+                    {/* Step number */}
+                    <div 
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono font-bold mb-3 transition-all duration-300"
+                      style={{
+                        background: `${item.color}12`,
+                        color: item.color,
+                        border: `1px solid ${item.color}30`,
+                        boxShadow: `0 0 10px ${item.color}20`
+                      }}
+                    >
+                      {item.step}
+                    </div>
+
+                    {/* Title */}
+                    <h3 
+                      className="text-sm font-bold tracking-wide mb-1 font-mono"
+                      style={{ color: item.color }}
+                    >
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-500 text-xs font-mono">{item.desc}</p>
+                  </div>
+
+                  {/* Plus button */}
+                  <div className="absolute top-3 right-3 w-6 h-6 rounded-md border border-gray-700/50 bg-[#0a0a0c] flex items-center justify-center text-gray-600 text-xs cursor-pointer hover:border-gray-600 transition-all hover:bg-gray-800/50 z-20">
+                    +
+                  </div>
+
+                  {/* Hover glow ring */}
+                  <motion.div 
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{ 
+                      boxShadow: `0 0 40px ${item.color}15, inset 0 0 20px ${item.color}05`,
+                    }}
+                  />
+
+                  {/* Animated border gradient on hover - Desktop only */}
+                  {!isMobile && (
+                    <motion.div 
+                      className="absolute inset-0 rounded-xl pointer-events-none opacity-0 group-hover:opacity-100"
+                      style={{
+                        background: `conic-gradient(from 0deg, ${item.color}40, ${item.color}00)`,
+                        filter: "blur(8px)",
+                      }}
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    />
+                  )}
                 </div>
-              </Reveal>
-            </div>
+
+                {/* Mobile arrow */}
+                {i < steps.length - 1 && (
+                  <div className="flex md:hidden justify-center py-2">
+                    <span className="text-gray-600 text-xs">↓</span>
+                  </div>
+                )}
+              </motion.div>
+            ))}
           </div>
         </div>
 
-        {/* Right — Principles */}
-        <div className="relative flex flex-col justify-center py-24 lg:py-32 px-6 lg:px-16">
-          {/* Mobile heading */}
-          <Reveal className="lg:hidden mb-16 text-center">
-            <p className="text-xs font-mono uppercase tracking-[0.4em] text-yellow/70 mb-4">
-              Principles of Iron
-            </p>
-            <h2 className="text-6xl md:text-7xl font-black text-white leading-[0.85] tracking-tighter">
-              THE <span className="text-yellow glow-text-yellow">CODE</span>
-            </h2>
-            <div className="mt-6 flex gap-1 justify-center">
-              <div className="w-12 h-1 bg-yellow rounded-full" />
-              <div className="w-6 h-1 bg-blue rounded-full" />
-              <div className="w-3 h-1 bg-gray-600 rounded-full" />
+        {/* Quote */}
+        <Reveal delay={0.2}>
+          <div className="mt-16 flex justify-center">
+            <div className="pl-5 border-l-2 border-[#5867B6]/40">
+              <p className="text-gray-400 italic text-lg">&ldquo;No shortcuts. Only results.&rdquo;</p>
+              <div className="flex items-center gap-3 mt-3">
+                <div className="w-6 h-px bg-[#FFFF92]/50" />
+                <p className="text-[#FFFF92] font-bold text-sm uppercase tracking-wide">Markus Rühl</p>
+              </div>
             </div>
-          </Reveal>
-
-          <StaggerContainer className="space-y-0">
-            {PRINCIPLES.map((principle, index) => (
-              <StaggerItem key={principle.title}>
-                <motion.div
-                  whileHover={{ x: 8 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="group relative border-b border-gray-800/50 hover:border-yellow/30 transition-colors duration-500"
-                >
-                  {/* Hover highlight bar */}
-                  <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-yellow scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
-
-                  <div className="py-10 lg:py-12 pl-6 lg:pl-10 pr-4 flex items-start gap-6 lg:gap-8">
-                    {/* Number */}
-                    <span
-                      className="text-5xl lg:text-6xl font-black leading-none tabular-nums transition-colors duration-500"
-                      style={{ color: index % 2 === 0 ? "#FFFF92" : "#5867B6" }}
-                    >
-                      0{index + 1}
-                    </span>
-
-                    {/* Text */}
-                    <div className="flex-1 pt-1">
-                      <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-none group-hover:text-yellow transition-colors duration-500">
-                        {principle.title}
-                      </h3>
-                      <p className="text-gray-500 text-sm mt-3 font-raleway leading-relaxed group-hover:text-gray-400 transition-colors duration-500">
-                        {principle.desc}
-                      </p>
-                    </div>
-
-                    {/* Arrow indicator */}
-                    <div className="pt-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                      <svg className="w-5 h-5 text-yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
-                    </div>
-                  </div>
-                </motion.div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-
-          {/* Quote */}
-          <Reveal delay={0.4} className="mt-16 lg:mt-20 pl-6 lg:pl-10 border-l-2 border-blue/30">
-            <p className="text-lg md:text-xl text-gray-500 leading-relaxed font-raleway italic">
-              &ldquo;Success isn&apos;t given. It&apos;s earned through discipline, sacrifice,
-              and an unwavering commitment to excellence.&rdquo;
-            </p>
-            <div className="flex items-center gap-3 mt-5">
-              <div className="w-8 h-[1px] bg-yellow" />
-              <p className="text-yellow font-bold text-sm tracking-wide uppercase">Markus Rühl</p>
-            </div>
-          </Reveal>
-        </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   )

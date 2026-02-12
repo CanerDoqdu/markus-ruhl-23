@@ -125,22 +125,25 @@ export default function MediaPreview() {
               className="group relative bg-[#0A0C13] hover:bg-[#0e1017] transition-colors duration-300 flex flex-col"
             >
               {/* Image / Icon area */}
-              <div className="relative h-48 flex items-center justify-center p-8">
+              <div className="relative h-52 overflow-hidden">
                 {item.image ? (
                   <>
                     <Image
                       src={item.image}
                       alt={item.title}
                       fill
-                      className="object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-700"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C13] via-[#0A0C13]/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C13] via-[#0A0C13]/50 to-[#0A0C13]/20" />
                   </>
                 ) : (
-                  <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-gray-700/30 flex items-center justify-center group-hover:border-gray-600/50 transition-all duration-300 group-hover:scale-110">
-                    <span className="text-3xl">
-                      {index === 2 ? "💪" : index === 3 ? "📊" : index === 4 ? "🏆" : index === 5 ? "🥇" : index === 6 ? "🎬" : "⭐"}
-                    </span>
+                  <div className="flex items-center justify-center h-full">
+                    <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-gray-700/30 flex items-center justify-center group-hover:border-gray-600/50 transition-all duration-300 group-hover:scale-110">
+                      <span className="text-3xl">
+                        {index === 2 ? "💪" : index === 3 ? "📊" : index === 4 ? "🏆" : index === 5 ? "🥇" : index === 6 ? "🎬" : "⭐"}
+                      </span>
+                    </div>
                   </div>
                 )}
 

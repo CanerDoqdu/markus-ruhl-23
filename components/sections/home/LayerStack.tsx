@@ -58,22 +58,28 @@ export default function LayerStack() {
     offset: ["start start", "end end"],
   })
 
+  const lastIndexRef = useRef(0)
+  
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    setActiveIndex(Math.min(2, Math.floor(v * 3)))
+    const newIndex = Math.min(2, Math.floor(v * 3))
+    if (newIndex !== lastIndexRef.current) {
+      lastIndexRef.current = newIndex
+      setActiveIndex(newIndex)
+    }
   })
 
   const active = LAYERS[activeIndex]
 
   return (
-    <section ref={containerRef} className="relative bg-main">
+    <section ref={containerRef} className="relative bg-main" style={{ height: '300vh' }}>
       {/* ——— DESKTOP: 3 columns, center sticky ——— */}
       <div className="hidden lg:flex">
         {/* LEFT — titles & descriptions */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 snap-y snap-mandatory">
           {LAYERS.map((layer) => (
             <div
               key={layer.number}
-              className="min-h-screen flex items-center justify-end px-10 2xl:pl-16 2xl:pr-12"
+              className="min-h-screen flex items-center justify-end px-10 2xl:pl-16 2xl:pr-12 snap-start"
             >
               <div className="max-w-sm w-full py-20">
                 <motion.div
@@ -151,7 +157,7 @@ export default function LayerStack() {
             <motion.div
               className="absolute w-[340px] h-[340px] rounded-full blur-[120px] opacity-[0.07]"
               animate={{ background: active.accentColor }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.3 }}
             />
 
             {LAYERS.map((layer, i) => (
@@ -162,7 +168,7 @@ export default function LayerStack() {
                   opacity: i === activeIndex ? 1 : 0,
                   scale: i === activeIndex ? 1 : 0.88,
                 }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 <div className="relative w-[300px] h-[480px]">
                   <Image
@@ -181,7 +187,7 @@ export default function LayerStack() {
               key={activeIndex}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 0.04, scale: 1 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.3 }}
               className="absolute text-[200px] font-black leading-none select-none pointer-events-none"
               style={{ color: active.accentColor }}
             >
@@ -198,7 +204,7 @@ export default function LayerStack() {
                     height: 8,
                     background: i === activeIndex ? layer.accentColor : "#374151",
                   }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.25 }}
                 />
               ))}
             </div>

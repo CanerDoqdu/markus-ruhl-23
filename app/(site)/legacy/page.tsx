@@ -124,28 +124,95 @@ export default function LegacyPage() {
         </section>
 
         {/* Partners */}
-        <section className="relative py-32 px-6 bg-main">
-          <div className="max-w-6xl mx-auto">
+        <section className="relative py-32 px-6 bg-main overflow-hidden">
+          {/* Animated gradient orb backgrounds */}
+          <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-yellow/[0.03] rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 right-1/4 translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue/[0.04] rounded-full blur-[100px] pointer-events-none" />
+
+          {/* Grid overlay */}
+          <div
+            className="absolute inset-0 opacity-[0.015]"
+            style={{
+              backgroundImage: `linear-gradient(rgba(255,255,146,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,146,0.4) 1px, transparent 1px)`,
+              backgroundSize: "80px 80px",
+            }}
+          />
+
+          <div className="relative z-10 max-w-6xl mx-auto">
+            {/* Header */}
             <Reveal>
-              <Heading className="text-center mb-16">
-                PARTNERS
-              </Heading>
+              <div className="text-center mb-20">
+                <div className="inline-flex items-center gap-3 mb-6">
+                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-yellow/40" />
+                  <span className="text-[10px] font-mono text-yellow/50 uppercase tracking-[0.4em]">
+                    Trusted Worldwide
+                  </span>
+                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-yellow/40" />
+                </div>
+                <Heading className="mb-4">
+                  PARTNERS & SPONSORS
+                </Heading>
+                <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
+                  Backed by the industry&apos;s most respected brands — the same standard of excellence, no compromises.
+                </p>
+              </div>
             </Reveal>
 
-            <div className="flex flex-wrap items-center justify-center gap-12">
+            {/* Partner cards */}
+            <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
               {[1, 2, 3, 4, 5].map((num) => (
-                <Reveal key={num} delay={num * 0.1}>
-                  <div className="grayscale hover:grayscale-0 transition-all duration-300">
-                    <Image
-                      src={`/assets/img_${num}.svg`}
-                      alt={`Partner ${num}`}
-                      width={120}
-                      height={60}
-                      className="object-contain opacity-60 hover:opacity-100 transition-opacity"
-                    />
+                <StaggerItem key={num}>
+                  <div className="group relative">
+                    {/* Card */}
+                    <div className="relative flex items-center justify-center aspect-square rounded-2xl border border-gray-800/50 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-sm hover:border-yellow/30 hover:from-yellow/[0.05] transition-all duration-500 overflow-hidden p-8">
+                      {/* Hover glow */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-yellow/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                      <div className="relative z-10 w-20 h-20 flex items-center justify-center">
+                        <Image
+                          src={`/assets/img_${num}.svg`}
+                          alt={`Partner ${num}`}
+                          width={80}
+                          height={80}
+                          className="max-w-full max-h-full object-contain grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bottom label */}
+                    <div className="mt-3 text-center">
+                      <span className="text-[9px] font-mono text-gray-600 uppercase tracking-[0.2em] group-hover:text-yellow/60 transition-colors duration-300">
+                        Partner 0{num}
+                      </span>
+                    </div>
                   </div>
-                </Reveal>
+                </StaggerItem>
               ))}
+            </StaggerContainer>
+
+            {/* Stats bar */}
+            <Reveal delay={0.3}>
+              <div className="mt-16 flex items-center justify-center gap-12 md:gap-20">
+                {[
+                  { value: "15+", label: "Years" },
+                  { value: "10+", label: "Partners" },
+                  { value: "Global", label: "Reach" },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center">
+                    <p className="text-2xl font-black text-white">{stat.value}</p>
+                    <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em] mt-1">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+            {/* Bottom accent */}
+            <div className="flex justify-center mt-16">
+              <div className="flex items-center gap-2">
+                <div className="h-px w-16 bg-gradient-to-r from-transparent to-gray-700/50" />
+                <div className="w-1.5 h-1.5 rounded-full bg-yellow/30" />
+                <div className="h-px w-16 bg-gradient-to-l from-transparent to-gray-700/50" />
+              </div>
             </div>
           </div>
         </section>
