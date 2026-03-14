@@ -58,6 +58,8 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 rounded-lg bg-gradient-to-r from-blue to-purple hover:shadow-glow-blue transition-all"
                 aria-label="Toggle menu"
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-navigation"
               >
                 {isMenuOpen ? (
                   <XMarkIcon className="w-6 h-6 text-white" />
@@ -73,7 +75,9 @@ export default function Header() {
       {/* Mobile Menu */}
       <AnimatePresence>
         {!isDesktop && isMenuOpen && (
-          <motion.div
+          <motion.nav
+            id="mobile-navigation"
+            aria-label="Mobile navigation"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "100vh" }}
             exit={{ opacity: 0, height: 0 }}
@@ -101,7 +105,7 @@ export default function Header() {
                 </motion.div>
               ))}
             </div>
-          </motion.div>
+          </motion.nav>
         )}
       </AnimatePresence>
     </header>
