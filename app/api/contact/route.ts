@@ -40,10 +40,14 @@ function sanitizeText(value: string): string {
 // Route handler
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
-  // CSRF: reject requests from origins other than our own site.
+  // CSRF: reject cross-origin requests.
+  // Falls back to deriving the expected origin from the request URL so the
+  // check is fail-closed even when NEXT_PUBLIC_SITE_URL is not configured.
   const origin = request.headers.get("origin")
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? ""
-  if (siteUrl && origin && origin !== siteUrl) {
+  const expectedOrigin =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    new URL(request.url).origin
+  if (origin && origin !== expectedOrigin) {
     return clientError("Forbidden", "BAD_REQUEST", 403)
   }
 
