@@ -92,16 +92,31 @@ export async function POST(request: NextRequest) {
     return validationError(result.errors)
   }
 
-  // TODO: Implement email sending logic here
-  // Options:
-  // 1. Use Resend: https://resend.com/docs
-  // 2. Use SendGrid: https://sendgrid.com/
-  // 3. Use Nodemailer with SMTP
+  // Safe cast: validate() guarantees these fields are present strings.
+  // Required by the mail service call below.
+  const { name, email, message } = body as { name: string; email: string; message: string }
 
   // Intentionally not logging PII (name, email, message content).
   console.log("Contact form submission received", { timestamp: new Date().toISOString() })
 
   try {
+    // ALL mail/notification service calls MUST live inside this try/catch.
+    // A service failure (timeout, auth error, API 5xx, SMTP reject) must be
+    // caught here and returned via serverError() — never let it propagate as
+    // an unhandled exception or leak error details to the client.
+    //
+    // Load credentials exclusively from environment variables — never hardcode:
+    //   Resend:     process.env.RESEND_API_KEY
+    //   SendGrid:   process.env.SENDGRID_API_KEY
+    //   Nodemailer: process.env.SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS
+    //
+    // TODO: wire up email sending here, e.g.:
+    //   await resend.emails.send({ from: 'noreply@yourdomain.com', to: email,
+    //                              subject: 'New contact from ' + name, text: message })
+    void name
+    void email
+    void message
+
     return ok({ message: "Message received successfully! We'll get back to you soon." })
   } catch (err) {
     return serverError(err)
