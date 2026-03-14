@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import Image from "next/image"
 
 interface TimelinePhase {
@@ -73,6 +73,7 @@ const TIMELINE_PHASES: TimelinePhase[] = [
 
 export default function InteractiveTimeline() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const shouldReduceMotion = useReducedMotion()
   const activePhase = TIMELINE_PHASES[activeIndex]
 
   return (
@@ -127,15 +128,19 @@ export default function InteractiveTimeline() {
 
           {/* LEFT — Numbered navigation list */}
           <div className="lg:col-span-4 lg:border-r lg:border-gray-800/50 lg:pr-8">
-            <div className="space-y-1">
+            <div className="space-y-1" role="tablist" aria-label="Career timeline phases" aria-orientation="vertical">
               {TIMELINE_PHASES.map((phase, index) => (
                 <motion.button
                   key={phase.year}
                   onClick={() => setActiveIndex(index)}
+                  id={`timeline-tab-${index}`}
+                  role="tab"
+                  aria-selected={activeIndex === index}
+                  aria-controls={`timeline-panel-${index}`}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.08 }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, delay: index * 0.08 }}
                   className={`w-full group flex items-center gap-4 py-4 px-4 rounded-lg text-left transition-all duration-300 ${
                     activeIndex === index
                       ? "bg-gradient-to-r from-[#FFFF92]/10 to-transparent border-l-2 border-[#FFFF92]"
@@ -143,8 +148,8 @@ export default function InteractiveTimeline() {
                   }`}
                 >
                   {/* Number */}
-                  <span className={`text-xs font-mono w-6 transition-colors duration-300 ${
-                    activeIndex === index ? "text-[#FFFF92]" : "text-gray-700"
+                    <span className={`text-xs font-mono w-6 transition-colors duration-300 ${
+                    activeIndex === index ? "text-[#FFFF92]" : "text-gray-500"
                   }`}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
@@ -158,7 +163,7 @@ export default function InteractiveTimeline() {
                         {phase.year}
                       </span>
                       <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors duration-300 ${
-                        activeIndex === index ? "text-[#5867B6]" : "text-gray-700"
+                        activeIndex === index ? "text-[#5867B6]" : "text-gray-500"
                       }`}>
                         {phase.phase}
                       </span>
@@ -175,8 +180,8 @@ export default function InteractiveTimeline() {
                     className={`w-4 h-4 transition-all duration-300 ${
                       activeIndex === index
                         ? "text-[#FFFF92] translate-x-0 opacity-100"
-                        : "text-gray-700 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
-                    }`}
+                        : "text-gray-500 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
+                     }`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -191,7 +196,7 @@ export default function InteractiveTimeline() {
                 <motion.div
                   className="h-full bg-gradient-to-r from-[#FFFF92] to-[#5867B6]"
                   animate={{ width: `${((activeIndex + 1) / TIMELINE_PHASES.length) * 100}%` }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
                 />
               </div>
               <div className="flex justify-between mt-2">
@@ -209,7 +214,7 @@ export default function InteractiveTimeline() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4 }}
                 className="relative w-full max-w-sm"
               >
                 {activePhase.image ? (
@@ -218,6 +223,7 @@ export default function InteractiveTimeline() {
                       src={activePhase.image}
                       alt={activePhase.title}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
                       className="object-cover"
                       quality={85}
                     />
@@ -240,12 +246,12 @@ export default function InteractiveTimeline() {
                       <motion.div
                         className="absolute w-48 h-48 rounded-full border border-[#FFFF92]/10"
                         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
-                        transition={{ duration: 3, repeat: Infinity }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity }}
                       />
                       <motion.div
                         className="absolute w-32 h-32 rounded-full border border-[#5867B6]/20"
                         animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.3, 0.1] }}
-                        transition={{ duration: 3, repeat: Infinity }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity }}
                       />
                       <div className="text-center z-10">
                         <p className="text-5xl font-black bg-gradient-to-b from-[#FFFF92] to-[#FFFF92]/30 bg-clip-text text-transparent">
@@ -283,10 +289,13 @@ export default function InteractiveTimeline() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeIndex}
+                id={`timeline-panel-${activeIndex}`}
+                role="tabpanel"
+                aria-labelledby={`timeline-tab-${activeIndex}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4 }}
                 className="space-y-8"
               >
                 {/* Phase badge */}
@@ -324,7 +333,7 @@ export default function InteractiveTimeline() {
                       key={highlight}
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: i * 0.1 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.3, delay: i * 0.1 }}
                       className="flex items-center gap-3"
                     >
                       <div className="w-1.5 h-1.5 bg-[#FFFF92]/60 rotate-45 flex-shrink-0" />
@@ -362,7 +371,7 @@ export default function InteractiveTimeline() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.2 }}
           className="mt-24 pt-12 border-t border-gray-800/30"
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -377,7 +386,7 @@ export default function InteractiveTimeline() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, delay: i * 0.1 }}
                 className="text-center lg:text-left"
               >
                 <div className="flex items-baseline gap-1 justify-center lg:justify-start">

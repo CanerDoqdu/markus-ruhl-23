@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface ButtonProps {
@@ -21,6 +21,7 @@ export default function Button({
   className = "",
   disabled = false,
 }: ButtonProps) {
+  const shouldReduceMotion = useReducedMotion()
   const baseStyles = "px-8 py-3 rounded-full font-semibold transition-all duration-300 inline-block text-center"
   
   const variants = {
@@ -39,8 +40,8 @@ export default function Button({
   if (href && !disabled) {
     return (
       <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
+        whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
         className="inline-block"
       >
         <Link href={href} className={buttonClasses}>
@@ -56,8 +57,8 @@ export default function Button({
       onClick={onClick}
       disabled={disabled}
       className={buttonClasses}
-      whileHover={{ scale: disabled ? 1 : 1.05 }}
-      whileTap={{ scale: disabled ? 1 : 0.95 }}
+      whileHover={shouldReduceMotion ? undefined : { scale: disabled ? 1 : 1.05 }}
+      whileTap={shouldReduceMotion ? undefined : { scale: disabled ? 1 : 0.95 }}
     >
       {children}
     </motion.button>
