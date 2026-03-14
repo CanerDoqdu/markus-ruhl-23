@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import Image from "next/image"
 import Button from "@/components/shared/Button"
 import useMediaQuery from "@/hooks/useMediaQuery"
@@ -275,7 +275,9 @@ const StatLine = ({ label, value, delay }: { label: string; value: string; delay
 
 export default function PremiumHero() {
   const isDesktop = useMediaQuery("(min-width: 1024px)")
+  const shouldReduceMotion = useReducedMotion()
   const [isHologramReady, setIsHologramReady] = useState(false)
+  const showHologram = isDesktop && !shouldReduceMotion
 
   return (
     <section id="home" className="relative h-screen w-full overflow-hidden bg-[#0a0c13]">
@@ -290,7 +292,7 @@ export default function PremiumHero() {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,146,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,146,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
       {/* Hologram in center */}
-      {isDesktop && (
+      {showHologram && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-full h-full max-w-4xl">
             <KinectHologram onReady={() => setIsHologramReady(true)} />
@@ -298,14 +300,16 @@ export default function PremiumHero() {
         </div>
       )}
 
-      {!isDesktop && (
+      {!showHologram && (
         <div className="absolute inset-0">
           <Image
             src="/assets/images/d46e04754cfeedcce04c2a2ca3594243.jpg"
-            alt="Markus Rühl"
+            alt="Markus Rühl on stage"
             fill
+            priority
+            sizes="100vw"
             className="object-cover opacity-40"
-            quality={85}
+            quality={75}
           />
         </div>
       )}
@@ -319,13 +323,13 @@ export default function PremiumHero() {
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.2 }}
               className="text-left space-y-4 lg:col-span-1"
             >
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.3 }}
                 className="text-xs font-mono text-gray-500 uppercase tracking-[0.3em]"
               >
                 UNLEASH THE POWER OF
@@ -350,7 +354,7 @@ export default function PremiumHero() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.6 }}
                 className="flex flex-wrap gap-4 pt-2"
               >
                 <Button href="#aboutus">
@@ -366,16 +370,16 @@ export default function PremiumHero() {
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.4 }}
               className="hidden lg:flex flex-col gap-6 items-end"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.5 }}
                 className="flex items-center gap-2 mb-2"
               >
-                <div className="w-2 h-2 rounded-full bg-[#FFFF92] animate-pulse" />
+                <div className={`w-2 h-2 rounded-full bg-[#FFFF92] ${shouldReduceMotion ? "" : "animate-pulse"}`} />
                 <p className="text-xs font-mono text-gray-500 uppercase tracking-[0.2em]">Career Stats</p>
               </motion.div>
 
@@ -388,7 +392,7 @@ export default function PremiumHero() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 1.2 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 1.2 }}
                 className="mt-4 flex items-center gap-3"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFFF92] to-[#FFD700] flex items-center justify-center text-black font-black text-sm">
@@ -409,14 +413,14 @@ export default function PremiumHero() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 1.5 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 1, delay: 1.5 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
       >
         <div className="flex flex-col items-center gap-2">
           <p className="text-gray-500 text-xs uppercase tracking-widest">Scroll</p>
           <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            animate={shouldReduceMotion ? { y: 0 } : { y: [0, 8, 0] }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
             className="w-6 h-10 rounded-full border-2 border-[#FFFF92]/30 flex items-start justify-center p-2"
           >
             <div className="w-1 h-2 rounded-full bg-[#FFFF92]" />
