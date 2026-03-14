@@ -96,7 +96,7 @@ export default function InteractiveTimeline() {
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6 }}
           className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-20 gap-6"
         >
           <div>
@@ -104,6 +104,7 @@ export default function InteractiveTimeline() {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4 }}
               className="text-xs font-mono text-[#FFFF92]/60 uppercase tracking-[0.3em] mb-4"
             >
               The Journey
@@ -137,19 +138,20 @@ export default function InteractiveTimeline() {
                   role="tab"
                   aria-selected={activeIndex === index}
                   aria-controls={`timeline-panel-${index}`}
+                  tabIndex={activeIndex === index ? 0 : -1}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, delay: index * 0.08 }}
-                  className={`w-full group flex items-center gap-4 py-4 px-4 rounded-lg text-left transition-all duration-300 ${
+                  className={`w-full group flex items-center gap-4 py-4 px-4 rounded-lg text-left transition-all duration-300 motion-reduce:transition-none ${
                     activeIndex === index
                       ? "bg-gradient-to-r from-[#FFFF92]/10 to-transparent border-l-2 border-[#FFFF92]"
                       : "hover:bg-white/[0.02] border-l-2 border-transparent"
                   }`}
                 >
                   {/* Number */}
-                    <span className={`text-xs font-mono w-6 transition-colors duration-300 ${
-                    activeIndex === index ? "text-[#FFFF92]" : "text-gray-500"
+                    <span className={`text-xs font-mono w-6 transition-colors duration-300 motion-reduce:transition-none ${
+                    activeIndex === index ? "text-[#FFFF92]" : "text-gray-400"
                   }`}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
@@ -158,12 +160,12 @@ export default function InteractiveTimeline() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                       <span className={`text-sm font-bold transition-colors duration-300 ${
-                        activeIndex === index ? "text-[#FFFF92]" : "text-gray-500 group-hover:text-gray-300"
+                        activeIndex === index ? "text-[#FFFF92]" : "text-gray-400 group-hover:text-gray-300"
                       }`}>
                         {phase.year}
                       </span>
                       <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors duration-300 ${
-                        activeIndex === index ? "text-[#5867B6]" : "text-gray-500"
+                        activeIndex === index ? "text-[#5867B6]" : "text-gray-400"
                       }`}>
                         {phase.phase}
                       </span>
@@ -177,10 +179,10 @@ export default function InteractiveTimeline() {
 
                   {/* Arrow */}
                   <svg
-                    className={`w-4 h-4 transition-all duration-300 ${
+                    className={`w-4 h-4 transition-all duration-300 motion-reduce:transition-none ${
                       activeIndex === index
                         ? "text-[#FFFF92] translate-x-0 opacity-100"
-                        : "text-gray-500 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
+                        : "text-gray-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
                      }`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >

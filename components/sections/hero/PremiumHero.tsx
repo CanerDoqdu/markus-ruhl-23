@@ -250,11 +250,21 @@ const KinectHologram = ({ onReady }: { onReady?: () => void }) => {
 }
 
 // Premium feature card component
-const StatLine = ({ label, value, delay }: { label: string; value: string; delay: number }) => (
+const StatLine = ({
+  label,
+  value,
+  delay,
+  shouldReduceMotion,
+}: {
+  label: string
+  value: string
+  delay: number
+  shouldReduceMotion: boolean | null
+}) => (
   <motion.div
     initial={{ opacity: 0, x: 30 }}
     animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.5, delay }}
+    transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.5, delay }}
     className="flex items-center justify-end gap-4"
   >
     <div className="flex items-center gap-2">
@@ -262,7 +272,7 @@ const StatLine = ({ label, value, delay }: { label: string; value: string; delay
         className="h-[1px] bg-gradient-to-r from-transparent to-[#FFFF92]/40"
         initial={{ width: 0 }}
         animate={{ width: 80 }}
-        transition={{ duration: 0.8, delay: delay + 0.2 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: delay + 0.2 }}
       />
       <div className="w-1.5 h-1.5 bg-[#FFFF92]/60 rotate-45" />
     </div>
@@ -383,11 +393,11 @@ export default function PremiumHero() {
                 <p className="text-xs font-mono text-gray-500 uppercase tracking-[0.2em]">Career Stats</p>
               </motion.div>
 
-              <StatLine label="Years Pro" value="14 YEARS" delay={0.6} />
-              <StatLine label="Stage Weight" value="129.5 KG" delay={0.7} />
-              <StatLine label="Off-Season" value="148 KG" delay={0.8} />
-              <StatLine label="Competitions" value="50+ SHOWS" delay={0.9} />
-              <StatLine label="Mass Increase" value="171%" delay={1.0} />
+              <StatLine label="Years Pro" value="14 YEARS" delay={0.6} shouldReduceMotion={shouldReduceMotion} />
+              <StatLine label="Stage Weight" value="129.5 KG" delay={0.7} shouldReduceMotion={shouldReduceMotion} />
+              <StatLine label="Off-Season" value="148 KG" delay={0.8} shouldReduceMotion={shouldReduceMotion} />
+              <StatLine label="Competitions" value="50+ SHOWS" delay={0.9} shouldReduceMotion={shouldReduceMotion} />
+              <StatLine label="Mass Increase" value="171%" delay={1.0} shouldReduceMotion={shouldReduceMotion} />
 
               <motion.div
                 initial={{ opacity: 0 }}

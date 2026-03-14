@@ -123,7 +123,7 @@ export default function Footer() {
           <p className="text-gray-700 text-xs font-mono">
             &copy; {currentYear} Markus Rühl. All rights reserved.
           </p>
-          <p className="text-gray-500 text-[10px] font-mono uppercase tracking-[0.3em]">
+          <p className="text-gray-400 text-[10px] font-mono uppercase tracking-[0.3em]">
             Discipline &middot; Power &middot; Legacy
           </p>
         </div>

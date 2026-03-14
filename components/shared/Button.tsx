@@ -22,7 +22,7 @@ export default function Button({
   disabled = false,
 }: ButtonProps) {
   const shouldReduceMotion = useReducedMotion()
-  const baseStyles = "px-8 py-3 rounded-full font-semibold transition-all duration-300 inline-block text-center"
+  const baseStyles = "px-8 py-3 rounded-full font-semibold transition-all duration-300 motion-reduce:transition-none inline-block text-center"
   
   const variants = {
     primary: "bg-gradient-to-r from-yellow to-blue text-main hover:shadow-glow-yellow",
