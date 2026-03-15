@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid"
 import { NAV_LINKS } from "@/lib/constants"
 import useMediaQuery from "@/hooks/useMediaQuery"
@@ -13,6 +13,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
   const isDesktop = useMediaQuery("(min-width: 1024px)")
+  const shouldReduceMotion = useReducedMotion()
 
   const isActive = (href: string) => {
     if (href === "/#home") return pathname === "/"
@@ -38,14 +39,14 @@ export default function Header() {
                     key={link.name}
                     href={link.href}
                     className={cn(
-                      "text-sm font-semibold tracking-wide transition-all duration-300 hover:text-yellow relative group",
+                      "text-sm font-semibold tracking-wide transition-all duration-300 motion-reduce:transition-none hover:text-yellow relative group",
                       isActive(link.href) ? "text-yellow" : "text-gray-300"
                     )}
                   >
                     {link.name}
                     <span
                       className={cn(
-                        "absolute -bottom-1 left-0 h-0.5 bg-yellow transition-all duration-300",
+                        "absolute -bottom-1 left-0 h-0.5 bg-yellow transition-all duration-300 motion-reduce:transition-none",
                         isActive(link.href) ? "w-full" : "w-0 group-hover:w-full"
                       )}
                     />
@@ -56,8 +57,10 @@ export default function Header() {
               /* Mobile Menu Button */
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 rounded-lg bg-gradient-to-r from-blue to-purple hover:shadow-glow-blue transition-all"
+                className="p-2 rounded-lg bg-gradient-to-r from-blue to-purple hover:shadow-glow-blue transition-all motion-reduce:transition-none"
                 aria-label="Toggle menu"
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-navigation"
               >
                 {isMenuOpen ? (
                   <XMarkIcon className="w-6 h-6 text-white" />
@@ -73,11 +76,13 @@ export default function Header() {
       {/* Mobile Menu */}
       <AnimatePresence>
         {!isDesktop && isMenuOpen && (
-          <motion.div
+          <motion.nav
+            id="mobile-navigation"
+            aria-label="Mobile navigation"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "100vh" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.3 }}
             className="fixed inset-0 top-[72px] bg-main/98 backdrop-blur-lg z-40"
           >
             <div className="flex flex-col items-center justify-center h-full gap-8 pb-20">
@@ -86,13 +91,13 @@ export default function Header() {
                   key={link.name}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { delay: index * 0.1 }}
                 >
                   <Link
                     href={link.href}
                     onClick={() => setIsMenuOpen(false)}
                     className={cn(
-                      "text-2xl font-bold tracking-wide transition-all duration-300 hover:text-yellow",
+                      "text-2xl font-bold tracking-wide transition-all duration-300 motion-reduce:transition-none hover:text-yellow",
                       isActive(link.href) ? "text-yellow" : "text-white"
                     )}
                   >
@@ -101,7 +106,7 @@ export default function Header() {
                 </motion.div>
               ))}
             </div>
-          </motion.div>
+          </motion.nav>
         )}
       </AnimatePresence>
     </header>
