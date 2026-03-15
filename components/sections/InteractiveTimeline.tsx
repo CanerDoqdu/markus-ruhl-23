@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState, type KeyboardEvent } from "react"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import Image from "next/image"
 
@@ -74,7 +74,40 @@ const TIMELINE_PHASES: TimelinePhase[] = [
 export default function InteractiveTimeline() {
   const [activeIndex, setActiveIndex] = useState(0)
   const shouldReduceMotion = useReducedMotion()
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const activePhase = TIMELINE_PHASES[activeIndex]
+
+  const focusAndSelectTab = (nextIndex: number) => {
+    setActiveIndex(nextIndex)
+    tabRefs.current[nextIndex]?.focus()
+  }
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      event.preventDefault()
+      const nextIndex = (index + 1) % TIMELINE_PHASES.length
+      focusAndSelectTab(nextIndex)
+      return
+    }
+
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      event.preventDefault()
+      const nextIndex = (index - 1 + TIMELINE_PHASES.length) % TIMELINE_PHASES.length
+      focusAndSelectTab(nextIndex)
+      return
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault()
+      focusAndSelectTab(0)
+      return
+    }
+
+    if (event.key === "End") {
+      event.preventDefault()
+      focusAndSelectTab(TIMELINE_PHASES.length - 1)
+    }
+  }
 
   return (
     <section className="relative bg-main py-32 px-6 overflow-hidden">
@@ -134,6 +167,10 @@ export default function InteractiveTimeline() {
                 <motion.button
                   key={phase.year}
                   onClick={() => setActiveIndex(index)}
+                  onKeyDown={(event) => handleTabKeyDown(event, index)}
+                  ref={(element) => {
+                    tabRefs.current[index] = element
+                  }}
                   id={`timeline-tab-${index}`}
                   role="tab"
                   aria-selected={activeIndex === index}
