@@ -196,18 +196,18 @@ export default function InteractiveTimeline() {
                   {/* Year + Title */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
-                      <span className={`text-sm font-bold transition-colors duration-300 ${
+                      <span className={`text-sm font-bold transition-colors duration-300 motion-reduce:transition-none ${
                         activeIndex === index ? "text-[#FFFF92]" : "text-gray-400 group-hover:text-gray-300"
                       }`}>
                         {phase.year}
                       </span>
-                      <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors duration-300 ${
+                      <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors duration-300 motion-reduce:transition-none ${
                         activeIndex === index ? "text-[#5867B6]" : "text-gray-400"
                       }`}>
                         {phase.phase}
                       </span>
                     </div>
-                    <p className={`text-sm truncate transition-colors duration-300 ${
+                    <p className={`text-sm truncate transition-colors duration-300 motion-reduce:transition-none ${
                       activeIndex === index ? "text-white" : "text-gray-600 group-hover:text-gray-400"
                     }`}>
                       {phase.title}

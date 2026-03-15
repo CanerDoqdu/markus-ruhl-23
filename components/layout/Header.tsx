@@ -39,14 +39,14 @@ export default function Header() {
                     key={link.name}
                     href={link.href}
                     className={cn(
-                      "text-sm font-semibold tracking-wide transition-all duration-300 hover:text-yellow relative group",
+                      "text-sm font-semibold tracking-wide transition-all duration-300 motion-reduce:transition-none hover:text-yellow relative group",
                       isActive(link.href) ? "text-yellow" : "text-gray-300"
                     )}
                   >
                     {link.name}
                     <span
                       className={cn(
-                        "absolute -bottom-1 left-0 h-0.5 bg-yellow transition-all duration-300",
+                        "absolute -bottom-1 left-0 h-0.5 bg-yellow transition-all duration-300 motion-reduce:transition-none",
                         isActive(link.href) ? "w-full" : "w-0 group-hover:w-full"
                       )}
                     />
