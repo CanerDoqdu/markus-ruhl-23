@@ -115,6 +115,8 @@ export async function POST(request: NextRequest) {
 
     return ok({ message: "Message received successfully! We'll get back to you soon." })
   } catch (err) {
+    // Log request context alongside the error so on-call has IP + timing.
+    console.error("[contact] mail service error", { ip, timestamp: new Date().toISOString() })
     return serverError(err)
   }
 }
