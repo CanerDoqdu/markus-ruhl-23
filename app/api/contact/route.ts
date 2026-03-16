@@ -2,34 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { validate, ContactSchema } from "@/lib/api/validation"
 import { ok, validationError, clientError, serverError } from "@/lib/api/response"
 import * as contactMail from "@/lib/contact/mail"
-
-// ---------------------------------------------------------------------------
-// In-memory rate limiter (sliding window, per IP).
-// NOTE: Resets on server restart. Replace with Redis for multi-instance setups.
-// ---------------------------------------------------------------------------
-const RATE_LIMIT_WINDOW_MS = 60_000 // 1 minute
-const RATE_LIMIT_MAX = 5 // max submissions per window per IP
-const rateLimitMap = new Map<string, { count: number; windowStart: number }>()
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now })
-    return false
-  }
-  if (entry.count >= RATE_LIMIT_MAX) return true
-  entry.count++
-  return false
-}
-
-// Purge stale entries to prevent unbounded memory growth.
-setInterval(() => {
-  const now = Date.now()
-  for (const [ip, entry] of rateLimitMap) {
-    if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS) rateLimitMap.delete(ip)
-  }
-}, RATE_LIMIT_WINDOW_MS * 2)
+import { isRateLimited } from "@/lib/rate-limit"
 
 // Strip control characters to prevent email-header injection (CRLF sequences).
 // Runs before schema validation so sanitised values are what get checked.
@@ -217,7 +190,7 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     request.headers.get("x-real-ip") ??
     "unknown"
-  if (isRateLimited(ip)) {
+  if (await isRateLimited(ip)) {
     return withSecurityHeaders(withCors(clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429), origin))
   }
 
