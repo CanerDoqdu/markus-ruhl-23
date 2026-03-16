@@ -761,17 +761,17 @@ describe("mail service failure handling", () => {
     expect(errorSpy).toHaveBeenCalled()
   })
 
-  it("returns 500 for thrown network errors during send and keeps process stable", async () => {
-    const thrownMessage = "socket hang up at C:\\\\srv\\\\mailer.ts:10"
-    const { response, text, json, errorSpy } = await submitWithMockedMailTransport(() => {
-      throw new Error(thrownMessage)
-    })
+  it("returns 500 for DNS/network failures during send and keeps process stable", async () => {
+    const networkFailureMessage = "getaddrinfo ENOTFOUND smtp.example.com"
+    const { response, text, json, errorSpy, sendContactMailMock } =
+      await submitWithMockedMailTransport(() => Promise.reject(new Error(networkFailureMessage)))
 
     expect(response.status).toBe(500)
     expect(json.success).toBe(false)
     expect(json.error?.code).toBe("INTERNAL_ERROR")
     expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
-    assertGenericSafeError(text, thrownMessage)
+    assertGenericSafeError(text, networkFailureMessage)
+    expect(sendContactMailMock).toHaveBeenCalledTimes(1)
     expect(errorSpy).toHaveBeenCalled()
   })
 })
