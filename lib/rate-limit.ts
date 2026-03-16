@@ -60,7 +60,7 @@ return count
 
 type RedisLikeClient = {
   connect: () => Promise<unknown>
-  eval: (script: string, numkeys: number, ...args: string[]) => Promise<number>
+  eval: (script: string, numkeys: number, ...args: Array<string | number>) => Promise<unknown>
   on: (event: "error" | "ready", callback: (err?: Error) => void) => void
 }
 
@@ -106,7 +106,8 @@ async function isRateLimitedRedis(ip: string): Promise<boolean> {
   try {
     const key = `rl:${ip}`
     // Atomic fixed-window counter: INCR + conditional PEXPIRE in one Lua call.
-    const count = await client.eval(INCR_WITH_EXPIRY_SCRIPT, 1, key, String(WINDOW_MS))
+    const count = Number(await client.eval(INCR_WITH_EXPIRY_SCRIPT, 1, key, String(WINDOW_MS)))
+    if (!Number.isFinite(count)) return isRateLimitedMemory(ip)
     return count > MAX_REQUESTS
   } catch (err) {
     // Redis op failed mid-request — degrade gracefully to in-memory.
