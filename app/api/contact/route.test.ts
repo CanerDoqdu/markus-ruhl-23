@@ -724,6 +724,28 @@ describe("mail service failure handling", () => {
     expect(sendContactMailMock).toHaveBeenCalledTimes(1)
   })
 
+  it("returns 500 when SMTP transport times out and does not leak timeout internals", async () => {
+    vi.useFakeTimers()
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const sendContactMailMock = vi
+      .spyOn(contactMail, "sendContactMail")
+      .mockImplementation(() => new Promise<void>(() => {}))
+
+    const responsePromise = POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    await vi.advanceTimersByTimeAsync(10_001)
+    const response = await responsePromise
+    const text = await response.text()
+    const json = JSON.parse(text) as ContactRouteErrorBody
+
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    assertGenericSafeError(text, "Mail service timeout")
+    expect(sendContactMailMock).toHaveBeenCalledTimes(1)
+    expect(errorSpy).toHaveBeenCalled()
+  })
+
   it("returns 500 for SMTP transporter rejection with generic safe response", async () => {
     const rejectionMessage =
       "SMTP authentication failed for smtp-user:smtp-pass@smtp.example.com (ECONNREFUSED)"
