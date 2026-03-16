@@ -12,8 +12,42 @@ function sanitizeText(value: string): string {
 // ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
+//
+// Guard execution order — each stage is intentionally cheaper than the next
+// so expensive work is never done for requests that will be rejected anyway:
+//
+//  [1] CSRF / origin check   Cheapest gate; rejects cross-origin requests
+//                            before they can consume rate-limit budget or
+//                            trigger JSON parsing.  Fail-closed: when
+//                            NEXT_PUBLIC_SITE_URL is absent the expected
+//                            origin is derived from request.url — attackers
+//                            cannot bypass by omitting the env var.
+//
+//                            Mechanism: Origin-header CSRF (no separate token).
+//                            Browsers always send Origin on cross-origin
+//                            requests; its absence means same-origin (allowed);
+//                            a mismatch means cross-origin (→ 403).
+//
+//  [2] Content-Type guard    Validates encoding before the body is read.
+//                            A 415 here avoids the JSON.parse() call for
+//                            non-JSON clients.
+//
+//  [3] Rate limiting         Applied only after origin + content-type pass,
+//                            so cross-origin probes cannot burn rate-limit
+//                            budget for legitimate users (→ 429).
+//
+//  [4] JSON parse            Body is read exactly once, after all gate
+//                            checks have passed.
+//
+//  [5] Sanitisation          Control-character stripping on raw string values
+//                            before schema validation so the validator always
+//                            sees clean input.
+//
+//  [6] Schema validation     Type, length, and format checks on sanitised
+//                            input (→ 422 with per-field detail).
+//
 export async function POST(request: NextRequest) {
-  // CSRF: reject cross-origin requests.
+  // [1] CSRF: reject cross-origin requests.
   // Falls back to deriving the expected origin from the request URL so the
   // check is fail-closed even when NEXT_PUBLIC_SITE_URL is not configured.
   const origin = request.headers.get("origin")
@@ -24,13 +58,13 @@ export async function POST(request: NextRequest) {
     return clientError("Forbidden", "BAD_REQUEST", 403)
   }
 
-  // Content-Type guard — only accept JSON bodies.
+  // [2] Content-Type guard — only accept JSON bodies.
   const contentType = request.headers.get("content-type") ?? ""
   if (!contentType.includes("application/json")) {
     return clientError("Unsupported Media Type", "BAD_REQUEST", 415)
   }
 
-  // Rate limiting — 5 requests per minute per IP.
+  // [3] Rate limiting — 5 requests per minute per IP.
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     request.headers.get("x-real-ip") ??
@@ -39,7 +73,7 @@ export async function POST(request: NextRequest) {
     return clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429)
   }
 
-  // Parse body safely to prevent prototype pollution via JSON.
+  // [4] Parse body safely to prevent prototype pollution via JSON.
   let body: unknown
   try {
     body = await request.json()
@@ -47,7 +81,7 @@ export async function POST(request: NextRequest) {
     return clientError("Request body must be valid JSON.")
   }
 
-  // Sanitize string fields before validation to strip control characters.
+  // [5] Sanitize string fields before validation to strip control characters.
   if (typeof body === "object" && body !== null && !Array.isArray(body)) {
     const raw = body as Record<string, unknown>
     const sanitized: Record<string, unknown> = { ...raw }
@@ -59,7 +93,7 @@ export async function POST(request: NextRequest) {
     body = sanitized
   }
 
-  // Schema validation: type checks, length caps, email format.
+  // [6] Schema validation: type checks, length caps, email format.
   const result = validate(body, ContactSchema)
   if (!result.ok) {
     return validationError(result.errors)

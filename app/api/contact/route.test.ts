@@ -221,3 +221,173 @@ describe("POST /api/contact", () => {
     expect(json.error?.code).toBeDefined()
   })
 })
+
+// ---------------------------------------------------------------------------
+// CSRF / origin guard — behavioral
+// ---------------------------------------------------------------------------
+//
+// This app uses origin-header-based CSRF protection rather than token-based
+// CSRF.  The Origin header is the implicit "token": browsers always attach it
+// on cross-origin requests, so its absence means same-origin (allowed) and a
+// mismatch means cross-origin (rejected with 403).
+//
+// Execution order in the hardened route (PR #53):
+//   [1] Origin check  → cheapest gate, runs before rate-limit and JSON parse
+//   [2] Content-Type  → rejects non-JSON before body is read
+//   [3] Rate limiting → only applied after origin + content-type pass
+//   [4] JSON parse / sanitise / validate
+//
+// Tests in this block are skipped on the unhardened baseline (HAS_CSRF=false)
+// and run fully against the hardened route.
+describe("CSRF / origin guard — behavioral", () => {
+  ;(HAS_CSRF ? it : it.skip)(
+    "allows requests without Origin header (same-origin browser form submission)",
+    async () => {
+      // Browsers omit Origin on same-origin requests that are not triggered by
+      // cross-origin fetch/XHR.  Route must treat absence of Origin as allowed.
+      const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+      expect(response.status).toBe(200)
+    }
+  )
+
+  ;(HAS_CSRF ? it : it.skip)(
+    "allows requests from the configured allowed origin",
+    async () => {
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const response = await POST(
+          createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://example.com" })
+        )
+        expect(response.status).toBe(200)
+        expect((await response.json() as { success: boolean }).success).toBe(true)
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+
+  ;(HAS_CSRF ? it : it.skip)(
+    "rejects disallowed origin with 403 — structured body, no sensitive data leaked",
+    async () => {
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const response = await POST(
+          createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://attacker.com" })
+        )
+        const text = await response.text()
+        const json = JSON.parse(text) as { success: boolean; error?: { code?: string; message?: string } }
+
+        expect(response.status).toBe(403)
+        expect(json.success).toBe(false)
+        expect(json.error?.code).toBeDefined()
+        // Rejection body must never expose internals
+        expect(text).not.toMatch(/at .+\(.+:\d+:\d+\)/)
+        expect(text).not.toMatch(/node_modules/)
+        expect(text).not.toMatch(/Error:/)
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+
+  ;(HAS_CSRF ? it : it.skip)(
+    "rejects null Origin (file:// page CSRF attempt) with 403",
+    async () => {
+      // Browsers send Origin: null for requests initiated from file:// pages and
+      // data: URIs.  The string "null" must never match any https:// origin.
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const response = await POST(
+          createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "null" })
+        )
+        expect(response.status).toBe(403)
+        expect((await response.json() as { success: boolean }).success).toBe(false)
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+})
+
+// ---------------------------------------------------------------------------
+// Response header contracts
+// ---------------------------------------------------------------------------
+//
+// All responses — success and error — must carry application/json content-type.
+// No CORS allow-origin wildcard should ever be emitted; doing so would nullify
+// the origin-based CSRF protection above.
+describe("response header contracts", () => {
+  it("returns Content-Type application/json on success responses", async () => {
+    const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    expect(response.headers.get("content-type")).toMatch(/application\/json/)
+  })
+
+  it("returns Content-Type application/json on validation error responses", async () => {
+    const response = await POST(createRequest(JSON.stringify({})))
+    expect(response.headers.get("content-type")).toMatch(/application\/json/)
+  })
+
+  it("returns Content-Type application/json on parse error responses", async () => {
+    const response = await POST(createRequest("{bad-json"))
+    expect(response.headers.get("content-type")).toMatch(/application\/json/)
+  })
+
+  ;(HAS_CSRF ? it : it.skip)(
+    "does not emit CORS allow-origin wildcard on cross-origin rejections",
+    async () => {
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const response = await POST(
+          createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://attacker.com" })
+        )
+        // '*' here would let attacker JS read the 403 body and probe the API
+        expect(response.headers.get("access-control-allow-origin")).not.toBe("*")
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+})
+
+// ---------------------------------------------------------------------------
+// Error response body safety (OWASP A05 — security misconfiguration)
+// ---------------------------------------------------------------------------
+//
+// All error paths must return structured JSON envelopes.  Stack traces, file
+// paths, and raw Error objects must never appear in response bodies regardless
+// of whether the hardening PR is active.
+describe("error response body safety", () => {
+  it("does not leak stack traces or internals in validation error responses", async () => {
+    const response = await POST(createRequest(JSON.stringify({})))
+    const text = await response.text()
+
+    expect(text).not.toMatch(/at .+\(.+:\d+:\d+\)/)
+    expect(text).not.toMatch(/node_modules/)
+    expect(text).not.toMatch(/Error:/)
+
+    const json = JSON.parse(text) as { success: boolean; error?: { code?: string } }
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBeDefined()
+  })
+
+  it("does not leak stack traces or internals in JSON parse error responses", async () => {
+    const response = await POST(createRequest("{bad-json"))
+    const text = await response.text()
+
+    expect(text).not.toMatch(/at .+\(.+:\d+:\d+\)/)
+    expect(text).not.toMatch(/node_modules/)
+    expect(text).not.toMatch(/SyntaxError/)
+
+    const json = JSON.parse(text) as { success: boolean; error?: { code?: string } }
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBeDefined()
+  })
+})

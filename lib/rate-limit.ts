@@ -41,12 +41,18 @@ function isRateLimitedMemory(ip: string): boolean {
 // ---------------------------------------------------------------------------
 // Redis backend — lazy-init so import never crashes when Redis is unavailable
 // ---------------------------------------------------------------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let redisClient: any = null
+type RedisLikeClient = {
+  connect: () => Promise<unknown>
+  incr: (key: string) => Promise<number>
+  pexpire: (key: string, ms: number) => Promise<number>
+  on: (event: "error" | "ready", callback: (err?: Error) => void) => void
+}
+
+let redisClient: RedisLikeClient | null = null
 let redisAvailable = false
 let redisInitDone = false
 
-async function getRedisClient(): Promise<typeof redisClient> {
+async function getRedisClient(): Promise<RedisLikeClient | null> {
   if (redisInitDone) return redisAvailable ? redisClient : null
   redisInitDone = true
 
