@@ -2,13 +2,14 @@ import { randomUUID } from "node:crypto"
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { POST } from "./route"
+import { OPTIONS, POST } from "./route"
 
 const ROUTE_SOURCE = readFileSync(fileURLToPath(new URL("./route.ts", import.meta.url)), "utf8")
 const HAS_RATE_LIMIT = /rate[\s-_]?limit|too many requests|429/i.test(ROUTE_SOURCE)
 const HAS_CSRF = /NEXT_PUBLIC_SITE_URL|origin.*siteUrl|siteUrl.*origin/i.test(ROUTE_SOURCE)
 const HAS_CONTENT_TYPE_GUARD = /unsupported media type|415/i.test(ROUTE_SOURCE)
 const HAS_SANITIZATION = /sanitize|crlf|\\\\r\\\\n|\x00-\x1f/i.test(ROUTE_SOURCE)
+const HAS_CORS_HEADERS = /Access-Control-Allow-Origin/i.test(ROUTE_SOURCE)
 
 /**
  * Each test gets a unique IP via x-forwarded-for so the module-level
@@ -390,4 +391,125 @@ describe("error response body safety", () => {
     expect(json.success).toBe(false)
     expect(json.error?.code).toBeDefined()
   })
+})
+
+// ---------------------------------------------------------------------------
+// CORS response headers — allowlisted origins
+// ---------------------------------------------------------------------------
+//
+// When the request Origin matches the expected origin the route must reflect
+// it back in Access-Control-Allow-Origin (never '*') and set
+// Access-Control-Allow-Credentials: true so that cookie-authenticated callers
+// can read the response.
+//
+// Execution order verified here: the OPTIONS preflight handler runs BEFORE
+// the CSRF guard in POST — a preflight for an allowlisted origin must succeed
+// (204) even though the POST CSRF guard would also accept it. A preflight for
+// a disallowed origin must be rejected (403) without CORS headers.
+describe("CORS response headers — allowlisted origins", () => {
+  ;(HAS_CORS_HEADERS ? it : it.skip)(
+    "POST from allowlisted origin gets Access-Control-Allow-Origin echoed back",
+    async () => {
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const response = await POST(
+          createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://example.com" })
+        )
+        expect(response.status).toBe(200)
+        expect(response.headers.get("access-control-allow-origin")).toBe("https://example.com")
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+
+  ;(HAS_CORS_HEADERS ? it : it.skip)(
+    "POST from allowlisted origin gets Access-Control-Allow-Credentials: true",
+    async () => {
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const response = await POST(
+          createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://example.com" })
+        )
+        expect(response.headers.get("access-control-allow-credentials")).toBe("true")
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+
+  ;(HAS_CORS_HEADERS ? it : it.skip)(
+    "POST from disallowed origin (403) does NOT receive Access-Control-Allow-Origin",
+    async () => {
+      // Attacker JS must not be able to read the 403 body.
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const response = await POST(
+          createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://attacker.com" })
+        )
+        expect(response.status).toBe(403)
+        expect(response.headers.get("access-control-allow-origin")).toBeNull()
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+
+  ;(HAS_CORS_HEADERS ? it : it.skip)(
+    "OPTIONS preflight from allowlisted origin returns 204 with CORS headers (runs before CSRF gate)",
+    async () => {
+      // This verifies the execution order: OPTIONS handler runs independently
+      // of the POST CSRF guard. A preflight must complete before the browser
+      // attempts the actual POST.
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const preflight = new Request("http://localhost/api/contact", {
+          method: "OPTIONS",
+          headers: {
+            origin: "https://example.com",
+            "access-control-request-method": "POST",
+            "access-control-request-headers": "content-type",
+          },
+        })
+        const response = await OPTIONS(preflight as Parameters<typeof OPTIONS>[0])
+        expect(response.status).toBe(204)
+        expect(response.headers.get("access-control-allow-origin")).toBe("https://example.com")
+        expect(response.headers.get("access-control-allow-credentials")).toBe("true")
+        expect(response.headers.get("access-control-allow-methods")).toMatch(/POST/)
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
+
+  ;(HAS_CORS_HEADERS ? it : it.skip)(
+    "OPTIONS preflight from disallowed origin returns 403 with no CORS headers",
+    async () => {
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const preflight = new Request("http://localhost/api/contact", {
+          method: "OPTIONS",
+          headers: {
+            origin: "https://attacker.com",
+            "access-control-request-method": "POST",
+          },
+        })
+        const response = await OPTIONS(preflight as Parameters<typeof OPTIONS>[0])
+        expect(response.status).toBe(403)
+        expect(response.headers.get("access-control-allow-origin")).toBeNull()
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
 })

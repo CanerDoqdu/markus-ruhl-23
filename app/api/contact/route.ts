@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { validate, ContactSchema } from "@/lib/api/validation"
 import { ok, validationError, clientError, serverError } from "@/lib/api/response"
 
@@ -37,13 +37,83 @@ function sanitizeText(value: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// CORS helpers
+// ---------------------------------------------------------------------------
+//
+// Access-Control-Allow-Origin echoes the specific allowed origin rather than
+// '*' so that Access-Control-Allow-Credentials: true is valid (browsers reject
+// wildcard + credentials mode).
+//
+// CORS headers are intentionally NOT added to 403 CSRF-rejection responses:
+// doing so would let attacker JS read the 403 body and probe the API surface.
+// All other responses (including 415, 429, 422, 400, 500) do carry CORS
+// headers when the origin is present and allowed, so the browser can surface
+// structured error detail to the calling application.
+
+function buildCorsHeaders(allowedOrigin: string): HeadersInit {
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Max-Age": "86400",
+  }
+}
+
+// Attach CORS headers to an existing NextResponse when the request carried an
+// Origin that passed the CSRF check. No-op when origin is null (same-origin).
+function withCors<T>(response: NextResponse<T>, origin: string | null): NextResponse<T> {
+  if (origin) {
+    const h = buildCorsHeaders(origin)
+    for (const [key, value] of Object.entries(h)) {
+      response.headers.set(key, value as string)
+    }
+  }
+  return response
+}
+
+// ---------------------------------------------------------------------------
+// CORS preflight handler
+// ---------------------------------------------------------------------------
+//
+// Middleware execution order rationale — OPTIONS runs BEFORE the CSRF/origin
+// check in POST.  This is architecturally correct because:
+//
+//   • Preflight requests carry no user data and cannot be weaponised for CSRF.
+//   • The browser sends OPTIONS to ask "is this origin allowed?"; blocking the
+//     preflight at the CSRF layer would prevent allowlisted origins from ever
+//     reaching the POST handler.
+//   • Allowing the preflight does NOT grant access — the subsequent POST is
+//     still subject to the full CSRF + rate-limit + validation stack.
+//
+// Response: 204 + full CORS headers for allowed origins, 403 for others.
+
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin")
+  const expectedOrigin =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    new URL(request.url).origin
+
+  if (!origin || origin !== expectedOrigin) {
+    return new NextResponse(null, { status: 403 })
+  }
+
+  return new NextResponse(null, { status: 204, headers: buildCorsHeaders(origin) })
+}
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 //
 // Guard execution order — each stage is intentionally cheaper than the next
 // so expensive work is never done for requests that will be rejected anyway:
 //
-//  [1] CSRF / origin check   Cheapest gate; rejects cross-origin requests
+//  [CORS preflight]          Handled by OPTIONS export above.  OPTIONS runs
+//                            before the CSRF check so allowlisted origins can
+//                            complete the browser preflight handshake without
+//                            being blocked by the origin guard in POST.
+//
+//  [1] CSRF / origin check   Cheapest POST gate; rejects cross-origin requests
 //                            before they can consume rate-limit budget or
 //                            trigger JSON parsing.  Fail-closed: when
 //                            NEXT_PUBLIC_SITE_URL is absent the expected
@@ -53,11 +123,13 @@ function sanitizeText(value: string): string {
 //                            Mechanism: Origin-header CSRF (no separate token).
 //                            Browsers always send Origin on cross-origin
 //                            requests; its absence means same-origin (allowed);
-//                            a mismatch means cross-origin (→ 403).
+//                            a mismatch means cross-origin (→ 403, no CORS
+//                            headers so attacker JS cannot read the response).
 //
 //  [2] Content-Type guard    Validates encoding before the body is read.
 //                            A 415 here avoids the JSON.parse() call for
-//                            non-JSON clients.
+//                            non-JSON clients.  CORS headers are added so the
+//                            browser can surface the error to the caller.
 //
 //  [3] Rate limiting         Applied only after origin + content-type pass,
 //                            so cross-origin probes cannot burn rate-limit
@@ -82,13 +154,14 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
     new URL(request.url).origin
   if (origin && origin !== expectedOrigin) {
+    // No CORS headers — intentional: attacker JS must not read this body.
     return clientError("Forbidden", "BAD_REQUEST", 403)
   }
 
   // [2] Content-Type guard — only accept JSON bodies.
   const contentType = request.headers.get("content-type") ?? ""
   if (!contentType.includes("application/json")) {
-    return clientError("Unsupported Media Type", "BAD_REQUEST", 415)
+    return withCors(clientError("Unsupported Media Type", "BAD_REQUEST", 415), origin)
   }
 
   // [3] Rate limiting — 5 requests per minute per IP.
@@ -97,7 +170,7 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ??
     "unknown"
   if (isRateLimited(ip)) {
-    return clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429)
+    return withCors(clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429), origin)
   }
 
   // [4] Parse body safely to prevent prototype pollution via JSON.
@@ -105,7 +178,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    return clientError("Request body must be valid JSON.")
+    return withCors(clientError("Request body must be valid JSON."), origin)
   }
 
   // [5] Sanitize string fields before validation to strip control characters.
@@ -123,7 +196,7 @@ export async function POST(request: NextRequest) {
   // [6] Schema validation: type checks, length caps, email format.
   const result = validate(body, ContactSchema)
   if (!result.ok) {
-    return validationError(result.errors)
+    return withCors(validationError(result.errors), origin)
   }
 
   // Safe cast: validate() guarantees these fields are present strings.
@@ -151,10 +224,10 @@ export async function POST(request: NextRequest) {
     void email
     void message
 
-    return ok({ message: "Message received successfully! We'll get back to you soon." })
+    return withCors(ok({ message: "Message received successfully! We'll get back to you soon." }), origin)
   } catch (err) {
     // Log request context alongside the error so on-call has IP + timing.
     console.error("[contact] mail service error", { ip, timestamp: new Date().toISOString() })
-    return serverError(err)
+    return withCors(serverError(err), origin)
   }
 }
