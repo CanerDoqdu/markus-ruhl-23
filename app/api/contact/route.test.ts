@@ -642,3 +642,31 @@ describe("security response headers", () => {
     }
   })
 })
+
+// ---------------------------------------------------------------------------
+// Method constraints — GET is intentionally absent (CSRF exempt by omission)
+// ---------------------------------------------------------------------------
+//
+// CSRF protection typically exempts GET requests because GET is supposed to be
+// idempotent (no state mutation).  This endpoint takes a stronger posture:
+// rather than trusting "GET is safe" assumptions, it deliberately omits the
+// GET handler entirely.  The contact form only accepts submissions (POST).
+//
+// Consequences:
+//   • No read-mutation surface: a CSRF attack via GET cannot trigger anything.
+//   • Any GET /api/contact request returns 405 (Method Not Allowed) from
+//     the Next.js router — no application code runs, no data is read.
+//   • The absence of GET is tested below to prevent accidental regression
+//     (e.g., a developer adding a debugging GET route and opening a new surface).
+//
+// This is the correct security posture: CSRF is "exempt" for GET because GET
+// is structurally absent — not because the check is skipped.
+describe("method constraints", () => {
+  it("does not export a GET handler — contact API has no read surface", async () => {
+    // Dynamic import avoids a static TS type error for an export that should
+    // not exist.  If GET is accidentally added to route.ts this test fails.
+    const routeModule = await import("./route")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((routeModule as any).GET).toBeUndefined()
+  })
+})
