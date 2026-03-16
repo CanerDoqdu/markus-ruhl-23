@@ -36,6 +36,36 @@ const VALID_PAYLOAD = {
   message: "I would like to discuss collaboration opportunities.",
 }
 
+async function submitWithSimulatedMailFailure(simulatedError: Error) {
+  const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+  vi.resetModules()
+  vi.doMock("@/lib/api/response", async () => {
+    const actual = await vi.importActual<typeof import("@/lib/api/response")>("@/lib/api/response")
+    return {
+      ...actual,
+      ok: vi.fn(() => {
+        throw simulatedError
+      }),
+    }
+  })
+
+  try {
+    const { POST: isolatedPost } = await import("./route")
+    const responsePromise = isolatedPost(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    await expect(responsePromise).resolves.toBeInstanceOf(Response)
+    const response = await responsePromise
+    const text = await response.text()
+    const json = JSON.parse(text) as {
+      success: boolean
+      error?: { code?: string; message?: string }
+    }
+    return { response, text, json, errorSpy }
+  } finally {
+    vi.doUnmock("@/lib/api/response")
+    vi.resetModules()
+  }
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.clearAllMocks()
@@ -219,5 +249,53 @@ describe("POST /api/contact", () => {
     const json = JSON.parse(text) as { success: boolean; error?: { code?: string } }
     expect(json.success).toBe(false)
     expect(json.error?.code).toBeDefined()
+  })
+
+  it("returns 500 and logs timeout failures from the mail service", async () => {
+    const timeoutError = Object.assign(new Error("SMTP timeout after 10000ms"), {
+      code: "ETIMEDOUT",
+      name: "TimeoutError",
+    })
+    const { response, text, json, errorSpy } = await submitWithSimulatedMailFailure(timeoutError)
+
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    expect(text).not.toMatch(/smtp|timeout|stack|node_modules|password/i)
+    expect(errorSpy).toHaveBeenCalled()
+    expect(errorSpy.mock.calls.some((call) => call.some((arg) => arg === timeoutError))).toBe(true)
+  })
+
+  it("returns 500 and logs transporter rejection errors safely", async () => {
+    const smtpRejectError = Object.assign(
+      new Error("550 5.7.1 Relaying denied for smtp-user:smtp-pass@smtp.example.com"),
+      { code: "EENVELOPE" }
+    )
+    const { response, text, json, errorSpy } = await submitWithSimulatedMailFailure(smtpRejectError)
+
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    expect(text).not.toMatch(/smtp-user|smtp-pass|smtp\.example\.com|550|stack|node_modules/i)
+    expect(errorSpy).toHaveBeenCalled()
+    expect(errorSpy.mock.calls.some((call) => call.some((arg) => arg === smtpRejectError))).toBe(true)
+  })
+
+  it("returns 500 and logs network errors during mail send without crashing", async () => {
+    const networkError = Object.assign(new Error("connect ECONNRESET 203.0.113.5:587"), {
+      code: "ECONNRESET",
+      syscall: "connect",
+    })
+    const { response, text, json, errorSpy } = await submitWithSimulatedMailFailure(networkError)
+
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    expect(text).not.toMatch(/ECONNRESET|203\.0\.113\.5|587|stack|node_modules|connect/i)
+    expect(errorSpy).toHaveBeenCalled()
+    expect(errorSpy.mock.calls.some((call) => call.some((arg) => arg === networkError))).toBe(true)
   })
 })
