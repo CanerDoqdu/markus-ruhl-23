@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { validate, ContactSchema } from "@/lib/api/validation"
 import { ok, validationError, clientError, serverError } from "@/lib/api/response"
+import * as contactMail from "@/lib/contact/mail"
 
 // ---------------------------------------------------------------------------
 // In-memory rate limiter (sliding window, per IP).
@@ -34,6 +35,31 @@ setInterval(() => {
 // Runs before schema validation so sanitised values are what get checked.
 function sanitizeText(value: string): string {
   return value.replace(/[\r\n\t\x00-\x1f\x7f]/g, " ").trim()
+}
+
+const MAIL_SEND_TIMEOUT_MS = 10_000
+
+function getMailSendTimeoutMs(): number {
+  const value = process.env.CONTACT_MAIL_TIMEOUT_MS
+  if (!value) return MAIL_SEND_TIMEOUT_MS
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : MAIL_SEND_TIMEOUT_MS
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error("Mail service timeout"))
+        }, timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId)
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -110,12 +136,7 @@ export async function POST(request: NextRequest) {
     //   SendGrid:   process.env.SENDGRID_API_KEY
     //   Nodemailer: process.env.SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS
     //
-    // TODO: wire up email sending here, e.g.:
-    //   await resend.emails.send({ from: 'noreply@yourdomain.com', to: email,
-    //                              subject: 'New contact from ' + name, text: message })
-    void name
-    void email
-    void message
+    await withTimeout(contactMail.sendContactMail({ name, email, message }), getMailSendTimeoutMs())
 
     return ok({ message: "Message received successfully! We'll get back to you soon." })
   } catch (err) {
