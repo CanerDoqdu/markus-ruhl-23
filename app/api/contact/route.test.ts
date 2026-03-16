@@ -40,6 +40,7 @@ const VALID_PAYLOAD = {
 
 type ContactRouteErrorBody = {
   success: boolean
+  data?: { message?: string }
   error?: { code?: string; message?: string }
 }
 
@@ -545,12 +546,177 @@ describe("CORS response headers — allowlisted origins", () => {
       }
     }
   )
+
+  // ---------------------------------------------------------------------------
+  // Credentialed cross-origin request
+  // ---------------------------------------------------------------------------
+  //
+  // A "credentialed" CORS request is one sent with fetch({ credentials: 'include' })
+  // or XHR.withCredentials = true — the browser attaches session cookies and auth
+  // headers automatically.  For the browser to expose the response body to JS:
+  //   • The server MUST reply with Access-Control-Allow-Credentials: true, AND
+  //   • Access-Control-Allow-Origin must be the specific origin, NOT '*'
+  // We simulate this by including a Cookie header in the request.
+  ;(HAS_CORS_HEADERS ? it : it.skip)(
+    "credentialed cross-origin POST from allowlisted origin — returns ACAO + ACAC: true",
+    async () => {
+      const original = process.env.NEXT_PUBLIC_SITE_URL
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+      try {
+        const credentialedRequest = new Request("http://localhost/api/contact", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            origin: "https://example.com",
+            // Simulate fetch({ credentials: 'include' }) — browser attaches cookies
+            cookie: "session=abc123; theme=dark",
+            "x-forwarded-for": randomUUID(),
+          },
+          body: JSON.stringify(VALID_PAYLOAD),
+        })
+        const response = await POST(credentialedRequest as Parameters<typeof POST>[0])
+
+        // Both headers required for browser to expose the response to credentialed JS
+        expect(response.status).toBe(200)
+        expect(response.headers.get("access-control-allow-origin")).toBe("https://example.com")
+        expect(response.headers.get("access-control-allow-credentials")).toBe("true")
+        // Wildcard + credentials is rejected by browsers — must never appear
+        expect(response.headers.get("access-control-allow-origin")).not.toBe("*")
+      } finally {
+        if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+        else process.env.NEXT_PUBLIC_SITE_URL = original
+      }
+    }
+  )
 })
 
+// ---------------------------------------------------------------------------
+// Security response headers (defence-in-depth)
+// ---------------------------------------------------------------------------
+//
+// Every response — success, error, and preflight — must carry:
+//
+//   X-Frame-Options: DENY
+//     Prevents this API endpoint being embedded in an iframe on an attacker
+//     page.  Although JSON APIs are not rendered, legacy browsers can expose
+//     JSON in frame contexts.
+//
+//   X-Content-Type-Options: nosniff
+//     Prevents MIME-sniffing of the JSON body as script/stylesheet, which
+//     can enable cross-origin attacks even when CORS policy is correct.
+//
+//   Cache-Control: no-store
+//     Prevents sensitive API responses (including error details) from being
+//     stored in browser or proxy caches.
+//
+// All three are stamped by withSecurityHeaders() on every exit path in both
+// OPTIONS and POST — including CSRF 403 rejections.
+describe("security response headers", () => {
+  it("includes X-Frame-Options: DENY on success responses", async () => {
+    const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    expect(response.headers.get("x-frame-options")).toBe("DENY")
+  })
+
+  it("includes X-Frame-Options: DENY on validation error responses", async () => {
+    const response = await POST(createRequest(JSON.stringify({})))
+    expect(response.headers.get("x-frame-options")).toBe("DENY")
+  })
+
+  it("includes X-Frame-Options: DENY on CSRF rejection responses (403)", async () => {
+    const original = process.env.NEXT_PUBLIC_SITE_URL
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+    try {
+      const response = await POST(
+        createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://attacker.com" })
+      )
+      expect(response.status).toBe(403)
+      expect(response.headers.get("x-frame-options")).toBe("DENY")
+    } finally {
+      if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+      else process.env.NEXT_PUBLIC_SITE_URL = original
+    }
+  })
+
+  it("includes X-Content-Type-Options: nosniff on success responses", async () => {
+    const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff")
+  })
+
+  it("includes X-Content-Type-Options: nosniff on error responses", async () => {
+    const response = await POST(createRequest(JSON.stringify({})))
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff")
+  })
+
+  it("includes Cache-Control: no-store on success responses", async () => {
+    const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    expect(response.headers.get("cache-control")).toBe("no-store")
+  })
+
+  it("includes Cache-Control: no-store on error responses", async () => {
+    const response = await POST(createRequest(JSON.stringify({})))
+    expect(response.headers.get("cache-control")).toBe("no-store")
+  })
+
+  it("includes X-Frame-Options: DENY on OPTIONS preflight responses", async () => {
+    const original = process.env.NEXT_PUBLIC_SITE_URL
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.com"
+    try {
+      const preflight = new Request("http://localhost/api/contact", {
+        method: "OPTIONS",
+        headers: {
+          origin: "https://example.com",
+          "access-control-request-method": "POST",
+        },
+      })
+      const response = await OPTIONS(preflight as Parameters<typeof OPTIONS>[0])
+      expect(response.headers.get("x-frame-options")).toBe("DENY")
+    } finally {
+      if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
+      else process.env.NEXT_PUBLIC_SITE_URL = original
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Method constraints — GET is intentionally absent (CSRF exempt by omission)
+// ---------------------------------------------------------------------------
+//
+// CSRF protection typically exempts GET requests because GET is supposed to be
+// idempotent (no state mutation).  This endpoint takes a stronger posture:
+// rather than trusting "GET is safe" assumptions, it deliberately omits the
+// GET handler entirely.  The contact form only accepts submissions (POST).
+//
+// Consequences:
+//   • No read-mutation surface: a CSRF attack via GET cannot trigger anything.
+//   • Any GET /api/contact request returns 405 (Method Not Allowed) from
+//     the Next.js router — no application code runs, no data is read.
+//   • The absence of GET is tested below to prevent accidental regression
+//     (e.g., a developer adding a debugging GET route and opening a new surface).
+//
+// This is the correct security posture: CSRF is "exempt" for GET because GET
+// is structurally absent — not because the check is skipped.
+describe("method constraints", () => {
+  it("does not export a GET handler — contact API has no read surface", async () => {
+    // Dynamic import avoids a static TS type error for an export that should
+    // not exist.  If GET is accidentally added to route.ts this test fails.
+    const routeModule = await import("./route")
+    expect((routeModule as Record<string, unknown>).GET).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Mail service failure handling
+// ---------------------------------------------------------------------------
+//
+// The route calls sendContactMail inside a try/catch.  Failures must:
+//   • Always return 500 with a generic client-safe message (OWASP A05)
+//   • Never leak SMTP credentials, server paths, or raw error messages
+//   • Log the error server-side (with IP + timestamp, not PII)
+//
+// Tests mock sendContactMail via vi.spyOn so no real transport is needed.
 describe("mail service failure handling", () => {
   it("keeps success baseline at 200 when mail transport succeeds", async () => {
-    const { response, text, sendContactMailMock } = await submitWithMockedMailTransport(async () => {})
-    const json = JSON.parse(text) as { success: boolean; data?: { message?: string } }
+    const { response, json, sendContactMailMock } = await submitWithMockedMailTransport(async () => {})
 
     expect(response.status).toBe(200)
     expect(json.success).toBe(true)
@@ -558,35 +724,26 @@ describe("mail service failure handling", () => {
     expect(sendContactMailMock).toHaveBeenCalledTimes(1)
   })
 
-  it("returns 500 for SMTP timeout and does not hang", async () => {
-    const originalTimeout = process.env.CONTACT_MAIL_TIMEOUT_MS
-    process.env.CONTACT_MAIL_TIMEOUT_MS = "25"
+  it("returns 500 when SMTP transport times out and does not leak timeout internals", async () => {
     vi.useFakeTimers()
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    const timeoutErrorMessage = "SMTP timeout after 10000ms"
     const sendContactMailMock = vi
       .spyOn(contactMail, "sendContactMail")
       .mockImplementation(() => new Promise<void>(() => {}))
 
-    try {
-      const responsePromise = POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    const responsePromise = POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+    await vi.advanceTimersByTimeAsync(10_001)
+    const response = await responsePromise
+    const text = await response.text()
+    const json = JSON.parse(text) as ContactRouteErrorBody
 
-      await vi.advanceTimersByTimeAsync(30)
-      const response = await responsePromise
-      const text = await response.text()
-      const json = JSON.parse(text) as ContactRouteErrorBody
-
-      expect(response.status).toBe(500)
-      expect(json.success).toBe(false)
-      expect(json.error?.code).toBe("INTERNAL_ERROR")
-      expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
-      assertGenericSafeError(text, timeoutErrorMessage)
-      expect(sendContactMailMock).toHaveBeenCalledTimes(1)
-      expect(errorSpy).toHaveBeenCalled()
-    } finally {
-      if (originalTimeout === undefined) delete process.env.CONTACT_MAIL_TIMEOUT_MS
-      else process.env.CONTACT_MAIL_TIMEOUT_MS = originalTimeout
-    }
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    assertGenericSafeError(text, "Mail service timeout")
+    expect(sendContactMailMock).toHaveBeenCalledTimes(1)
+    expect(errorSpy).toHaveBeenCalled()
   })
 
   it("returns 500 for SMTP transporter rejection with generic safe response", async () => {
@@ -596,7 +753,6 @@ describe("mail service failure handling", () => {
       Promise.reject(new Error(rejectionMessage))
     )
 
-    // 500 is correct because transporter failure is a server-side dependency error.
     expect(response.status).toBe(500)
     expect(json.success).toBe(false)
     expect(json.error?.code).toBe("INTERNAL_ERROR")

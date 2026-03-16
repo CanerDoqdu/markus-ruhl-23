@@ -71,6 +71,28 @@ function withCors<T>(response: NextResponse<T>, origin: string | null): NextResp
   return response
 }
 
+// Security headers stamped on every response (including CSRF 403 rejections).
+// X-Frame-Options: DENY — prevents this API being embedded in an iframe;
+//   defence-in-depth even for JSON APIs since legacy browsers can expose JSON
+//   in frame contexts.
+// X-Content-Type-Options: nosniff — prevents MIME-sniffing of the JSON body
+//   as script/stylesheet, which can enable cross-origin attacks even when the
+//   CORS policy is correct.
+// Cache-Control: no-store — sensitive API responses (including error detail)
+//   must never be stored in browser or proxy caches.
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Cache-Control": "no-store",
+}
+
+function withSecurityHeaders<T>(response: NextResponse<T>): NextResponse<T> {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value)
+  }
+  return response
+}
+
 // ---------------------------------------------------------------------------
 // CORS preflight handler
 // ---------------------------------------------------------------------------
@@ -94,10 +116,10 @@ export async function OPTIONS(request: NextRequest) {
     new URL(request.url).origin
 
   if (!origin || origin !== expectedOrigin) {
-    return new NextResponse(null, { status: 403 })
+    return withSecurityHeaders(new NextResponse(null, { status: 403 }))
   }
 
-  return new NextResponse(null, { status: 204, headers: buildCorsHeaders(origin) })
+  return withSecurityHeaders(new NextResponse(null, { status: 204, headers: buildCorsHeaders(origin) }))
 }
 
 // ---------------------------------------------------------------------------
@@ -154,13 +176,13 @@ export async function POST(request: NextRequest) {
     new URL(request.url).origin
   if (origin && origin !== expectedOrigin) {
     // No CORS headers — intentional: attacker JS must not read this body.
-    return clientError("Forbidden", "BAD_REQUEST", 403)
+    return withSecurityHeaders(clientError("Forbidden", "BAD_REQUEST", 403))
   }
 
   // [2] Content-Type guard — only accept JSON bodies.
   const contentType = request.headers.get("content-type") ?? ""
   if (!contentType.includes("application/json")) {
-    return withCors(clientError("Unsupported Media Type", "BAD_REQUEST", 415), origin)
+    return withSecurityHeaders(withCors(clientError("Unsupported Media Type", "BAD_REQUEST", 415), origin))
   }
 
   // [3] Rate limiting — 5 requests per minute per IP.
@@ -169,7 +191,7 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ??
     "unknown"
   if (await isRateLimited(ip)) {
-    return withCors(clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429), origin)
+    return withSecurityHeaders(withCors(clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429), origin))
   }
 
   // [4] Parse body safely to prevent prototype pollution via JSON.
@@ -177,7 +199,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    return withCors(clientError("Request body must be valid JSON."), origin)
+    return withSecurityHeaders(withCors(clientError("Request body must be valid JSON."), origin))
   }
 
   // [5] Sanitize string fields before validation to strip control characters.
@@ -195,7 +217,7 @@ export async function POST(request: NextRequest) {
   // [6] Schema validation: type checks, length caps, email format.
   const result = validate(body, ContactSchema)
   if (!result.ok) {
-    return withCors(validationError(result.errors), origin)
+    return withSecurityHeaders(withCors(validationError(result.errors), origin))
   }
 
   // Safe cast: validate() guarantees these fields are present strings.
@@ -218,10 +240,10 @@ export async function POST(request: NextRequest) {
     //
     await withTimeout(contactMail.sendContactMail({ name, email, message }), getMailSendTimeoutMs())
 
-    return withCors(ok({ message: "Message received successfully! We'll get back to you soon." }), origin)
+    return withSecurityHeaders(withCors(ok({ message: "Message received successfully! We'll get back to you soon." }), origin))
   } catch (err) {
     // Log request context alongside the error so on-call has IP + timing.
     console.error("[contact] mail service error", { ip, timestamp: new Date().toISOString() })
-    return withCors(serverError(err), origin)
+    return withSecurityHeaders(withCors(serverError(err), origin))
   }
 }
