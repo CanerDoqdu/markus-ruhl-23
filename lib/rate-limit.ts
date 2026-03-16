@@ -1,5 +1,5 @@
 /**
- * Environment-aware rate limiter (sliding window, per IP).
+ * Environment-aware rate limiter (fixed window, per IP).
  *
  * Uses Redis when REDIS_URL or REDIS_HOST is set in the environment so all
  * instances share the same counter — required for multi-instance deployments.
@@ -8,6 +8,11 @@
  *
  * Window size and max requests are read from env vars so they can be tuned
  * per environment without code changes.
+ *
+ * Algorithm: fixed window (not sliding). The window resets once per WINDOW_MS
+ * interval anchored to the first request. A burst across a window boundary
+ * could allow up to 2×MAX_REQUESTS within any WINDOW_MS span — acceptable for
+ * a low-volume contact form.
  */
 
 const WINDOW_MS = parseInt(process.env.CONTACT_RATE_LIMIT_WINDOW_MS ?? "60000", 10)
@@ -41,10 +46,21 @@ function isRateLimitedMemory(ip: string): boolean {
 // ---------------------------------------------------------------------------
 // Redis backend — lazy-init so import never crashes when Redis is unavailable
 // ---------------------------------------------------------------------------
+
+// Lua script: atomically INCR and set expiry only on the first call within the
+// window.  Running as a single EVAL command prevents the INCR-succeeds /
+// PEXPIRE-fails race that would leave a key with no TTL (permanent IP block).
+const INCR_WITH_EXPIRY_SCRIPT = `
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('PEXPIRE', KEYS[1], ARGV[1])
+end
+return count
+`
+
 type RedisLikeClient = {
   connect: () => Promise<unknown>
-  incr: (key: string) => Promise<number>
-  pexpire: (key: string, ms: number) => Promise<number>
+  eval: (script: string, numkeys: number, ...args: string[]) => Promise<number>
   on: (event: "error" | "ready", callback: (err?: Error) => void) => void
 }
 
@@ -89,12 +105,8 @@ async function isRateLimitedRedis(ip: string): Promise<boolean> {
 
   try {
     const key = `rl:${ip}`
-    // INCR is atomic; first call in a window sets the initial count.
-    const count = await client.incr(key)
-    if (count === 1) {
-      // Align expiry to the window so keys self-expire without a sweeper.
-      await client.pexpire(key, WINDOW_MS)
-    }
+    // Atomic fixed-window counter: INCR + conditional PEXPIRE in one Lua call.
+    const count = await client.eval(INCR_WITH_EXPIRY_SCRIPT, 1, key, String(WINDOW_MS))
     return count > MAX_REQUESTS
   } catch (err) {
     // Redis op failed mid-request — degrade gracefully to in-memory.
