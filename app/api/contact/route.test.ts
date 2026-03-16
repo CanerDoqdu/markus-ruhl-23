@@ -700,8 +700,7 @@ describe("method constraints", () => {
     // Dynamic import avoids a static TS type error for an export that should
     // not exist.  If GET is accidentally added to route.ts this test fails.
     const routeModule = await import("./route")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((routeModule as any).GET).toBeUndefined()
+    expect((routeModule as Record<string, unknown>).GET).toBeUndefined()
   })
 })
 
