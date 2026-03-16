@@ -55,7 +55,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.name}
-                  className="w-9 h-9 rounded-lg border border-gray-800/60 flex items-center justify-center text-gray-500 hover:text-yellow hover:border-yellow/30 transition-all duration-300"
+                  className="w-9 h-9 rounded-lg border border-gray-800/60 flex items-center justify-center text-gray-500 hover:text-yellow hover:border-yellow/30 transition-all duration-300 motion-reduce:transition-none"
                 >
                   {SOCIAL_ICONS[social.icon] ?? (
                     <span className="text-xs font-bold">{social.name[0]}</span>
@@ -75,7 +75,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 text-sm hover:text-yellow transition-colors duration-200"
+                    className="text-gray-400 text-sm hover:text-yellow transition-colors duration-200 motion-reduce:transition-none"
                   >
                     {link.name}
                   </Link>
@@ -94,9 +94,9 @@ export default function Footer() {
             </p>
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-3 text-sm font-bold text-yellow hover:text-white transition-colors duration-300"
+              className="group inline-flex items-center gap-3 text-sm font-bold text-yellow hover:text-white transition-colors duration-300 motion-reduce:transition-none"
             >
-              <span className="w-8 h-8 rounded-full border border-yellow/40 flex items-center justify-center group-hover:bg-yellow group-hover:text-main transition-all duration-300">
+              <span className="w-8 h-8 rounded-full border border-yellow/40 flex items-center justify-center group-hover:bg-yellow group-hover:text-main transition-all duration-300 motion-reduce:transition-none">
                 <svg
                   className="w-3.5 h-3.5"
                   fill="none"
@@ -123,7 +123,7 @@ export default function Footer() {
           <p className="text-gray-700 text-xs font-mono">
             &copy; {currentYear} Markus Rühl. All rights reserved.
           </p>
-          <p className="text-gray-800 text-[10px] font-mono uppercase tracking-[0.3em]">
+          <p className="text-gray-400 text-[10px] font-mono uppercase tracking-[0.3em]">
             Discipline &middot; Power &middot; Legacy
           </p>
         </div>

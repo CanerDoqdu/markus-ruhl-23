@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import * as contactMail from "@/lib/contact/mail"
 import { OPTIONS, POST } from "./route"
 
 const ROUTE_SOURCE = readFileSync(fileURLToPath(new URL("./route.ts", import.meta.url)), "utf8")
@@ -37,7 +38,40 @@ const VALID_PAYLOAD = {
   message: "I would like to discuss collaboration opportunities.",
 }
 
+type ContactRouteErrorBody = {
+  success: boolean
+  data?: { message?: string }
+  error?: { code?: string; message?: string }
+}
+
+function assertGenericSafeError(text: string, rawErrorMessage: string) {
+  expect(text).not.toContain(rawErrorMessage)
+  expect(text).not.toMatch(/at .+\(.+:\d+:\d+\)/)
+  expect(text).not.toMatch(/node_modules|smtp-user|smtp-pass|password|api[_-]?key/i)
+  expect(text).not.toMatch(/[A-Za-z]:\\\\/)
+}
+
+async function submitWithMockedMailTransport(
+  transportImpl: () => Promise<void> | void
+): Promise<{
+  response: Response
+  text: string
+  json: ContactRouteErrorBody
+  errorSpy: ReturnType<typeof vi.spyOn>
+  sendContactMailMock: ReturnType<typeof vi.spyOn<typeof contactMail, "sendContactMail">>
+}> {
+  const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+  const sendContactMailMock = vi
+    .spyOn(contactMail, "sendContactMail")
+    .mockImplementation(transportImpl)
+  const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+  const text = await response.text()
+  const json = JSON.parse(text) as ContactRouteErrorBody
+  return { response, text, json, errorSpy, sendContactMailMock }
+}
+
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.clearAllMocks()
   vi.useRealTimers()
@@ -668,5 +702,55 @@ describe("method constraints", () => {
     const routeModule = await import("./route")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((routeModule as any).GET).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Mail service failure handling
+// ---------------------------------------------------------------------------
+//
+// The route calls sendContactMail inside a try/catch.  Failures must:
+//   • Always return 500 with a generic client-safe message (OWASP A05)
+//   • Never leak SMTP credentials, server paths, or raw error messages
+//   • Log the error server-side (with IP + timestamp, not PII)
+//
+// Tests mock sendContactMail via vi.spyOn so no real transport is needed.
+describe("mail service failure handling", () => {
+  it("keeps success baseline at 200 when mail transport succeeds", async () => {
+    const { response, json, sendContactMailMock } = await submitWithMockedMailTransport(async () => {})
+
+    expect(response.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.data?.message).toBe("Message received successfully! We'll get back to you soon.")
+    expect(sendContactMailMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("returns 500 for SMTP transporter rejection with generic safe response", async () => {
+    const rejectionMessage =
+      "SMTP authentication failed for smtp-user:smtp-pass@smtp.example.com (ECONNREFUSED)"
+    const { response, text, json, errorSpy } = await submitWithMockedMailTransport(() =>
+      Promise.reject(new Error(rejectionMessage))
+    )
+
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    assertGenericSafeError(text, rejectionMessage)
+    expect(errorSpy).toHaveBeenCalled()
+  })
+
+  it("returns 500 for thrown network errors during send and keeps process stable", async () => {
+    const thrownMessage = "socket hang up at C:\\\\srv\\\\mailer.ts:10"
+    const { response, text, json, errorSpy } = await submitWithMockedMailTransport(() => {
+      throw new Error(thrownMessage)
+    })
+
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    assertGenericSafeError(text, thrownMessage)
+    expect(errorSpy).toHaveBeenCalled()
   })
 })
