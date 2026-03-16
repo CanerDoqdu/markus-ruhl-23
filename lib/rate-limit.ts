@@ -121,9 +121,13 @@ async function getRedisClient(): Promise<RedisLikeClient | null> {
 
   try {
     const { default: Redis } = await import("ioredis")
+    // connectTimeout: fail fast during initial handshake (default is 10 s — too long for a web request).
+    // commandTimeout: cap per-command latency so a hung Redis never stalls the contact route handler.
+    // enableOfflineQueue: false ensures commands are never buffered while the connection is down.
+    const redisOpts = { lazyConnect: true, enableOfflineQueue: false, connectTimeout: 2000, commandTimeout: 1000 }
     const client = process.env.REDIS_URL
-      ? new Redis(process.env.REDIS_URL, { lazyConnect: true, enableOfflineQueue: false })
-      : new Redis({ host: process.env.REDIS_HOST, lazyConnect: true, enableOfflineQueue: false })
+      ? new Redis(process.env.REDIS_URL, redisOpts)
+      : new Redis({ host: process.env.REDIS_HOST, ...redisOpts })
 
     await client.connect()
 
