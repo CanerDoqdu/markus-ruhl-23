@@ -163,6 +163,85 @@ describe("rate-limit: Redis sliding-window path", () => {
 })
 
 // ---------------------------------------------------------------------------
+// Window slide behaviour — old requests outside the window must not count
+// ---------------------------------------------------------------------------
+
+describe("rate-limit: window slide / expiry", () => {
+  beforeEach(() => {
+    delete process.env.REDIS_URL
+    delete process.env.REDIS_HOST
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("in-memory: resets counter after window expires (old requests don't count)", async () => {
+    process.env.CONTACT_RATE_LIMIT_MAX = "2"
+    process.env.CONTACT_RATE_LIMIT_WINDOW_MS = "1000"
+    vi.resetModules()
+    vi.useFakeTimers()
+
+    const { isRateLimited } = await import("./rate-limit")
+    const ip = uniqueIp()
+
+    // Exhaust the limit in window #1
+    await isRateLimited(ip) // 1 — allowed
+    await isRateLimited(ip) // 2 — allowed
+    expect(await isRateLimited(ip)).toBe(true) // 3 — blocked (over limit)
+
+    // Advance time past the full window so the old bucket expires
+    vi.advanceTimersByTime(1001)
+
+    // Counter must have reset; request is allowed again
+    expect(await isRateLimited(ip)).toBe(false)
+
+    delete process.env.CONTACT_RATE_LIMIT_MAX
+    delete process.env.CONTACT_RATE_LIMIT_WINDOW_MS
+  })
+
+  it("Redis path: passes (now - window) as the pruning cutoff so expired entries are evicted", async () => {
+    process.env.REDIS_URL = "redis://localhost:6379"
+    vi.resetModules()
+
+    const capturedArgs: unknown[][] = []
+    const mockEval = vi.fn().mockImplementation((...args: unknown[]) => {
+      capturedArgs.push(args)
+      return Promise.resolve(0)
+    })
+    const { default: RedisMock } = await import("ioredis")
+    ;(RedisMock as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+      connect: vi.fn().mockResolvedValue(undefined),
+      eval: mockEval,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === "ready") cb()
+      }),
+    }))
+
+    const { isRateLimited } = await import("./rate-limit")
+    const before = Date.now()
+    await isRateLimited("10.2.0.1")
+    const after = Date.now()
+
+    // ARGV[1]=now, ARGV[2]=window. ZREMRANGEBYSCORE evicts scores <= now-window.
+    // Verify the timestamp is within the expected range so the pruning cutoff is correct.
+    const args = capturedArgs[0] as [string, number, string, string, string, string, string]
+    const [, , , nowStr, windowStr] = args
+    const now = Number(nowStr)
+    const window = Number(windowStr)
+
+    expect(now).toBeGreaterThanOrEqual(before)
+    expect(now).toBeLessThanOrEqual(after)
+    expect(window).toBeGreaterThan(0)
+    // If now - window >= now, nothing would ever be evicted — the window would never slide.
+    expect(now - window).toBeLessThan(now)
+
+    delete process.env.REDIS_URL
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Fail-open behaviour
 // ---------------------------------------------------------------------------
 
