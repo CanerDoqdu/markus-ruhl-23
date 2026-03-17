@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validate, ContactSchema } from "@/lib/api/validation"
 import { ok, validationError, clientError, serverError } from "@/lib/api/response"
+import { logEvent } from "@/lib/api/log"
 import * as contactMail from "@/lib/contact/mail"
 import { isRateLimited } from "@/lib/rate-limit"
 
@@ -167,13 +168,15 @@ export async function OPTIONS(request: NextRequest) {
 //                            input (→ 422 with per-field detail).
 //
 export async function POST(request: NextRequest) {
+  const start = Date.now()
+
   // Extract IP early so it is available for structured logging on every path.
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     request.headers.get("x-real-ip") ??
     "unknown"
 
-  console.log(JSON.stringify({ event: "contact_request", ip, timestamp: new Date().toISOString() }))
+  logEvent({ event: "contact_request", route: "/api/contact", method: "POST", status: 0, durationMs: 0, ip })
 
   // [1] CSRF: reject cross-origin requests.
   // Falls back to deriving the expected origin from the request URL so the
@@ -184,18 +187,20 @@ export async function POST(request: NextRequest) {
     new URL(request.url).origin
   if (origin && origin !== expectedOrigin) {
     // No CORS headers — intentional: attacker JS must not read this body.
+    logEvent({ event: "csrf_rejected", route: "/api/contact", method: "POST", status: 403, durationMs: Date.now() - start, ip })
     return withSecurityHeaders(clientError("Forbidden", "BAD_REQUEST", 403))
   }
 
   // [2] Content-Type guard — only accept JSON bodies.
   const contentType = request.headers.get("content-type") ?? ""
   if (!contentType.includes("application/json")) {
+    logEvent({ event: "content_type_rejected", route: "/api/contact", method: "POST", status: 415, durationMs: Date.now() - start, ip })
     return withSecurityHeaders(withCors(clientError("Unsupported Media Type", "BAD_REQUEST", 415), origin))
   }
 
   // [3] Rate limiting — 5 requests per minute per IP.
   if (await isRateLimited(ip)) {
-    console.log(JSON.stringify({ event: "rate_limit_hit", ip, timestamp: new Date().toISOString() }))
+    logEvent({ event: "rate_limit_hit", route: "/api/contact", method: "POST", status: 429, durationMs: Date.now() - start, ip })
     return withSecurityHeaders(withCors(clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429), origin))
   }
 
@@ -204,6 +209,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
+    logEvent({ event: "parse_error", route: "/api/contact", method: "POST", status: 400, durationMs: Date.now() - start, ip })
     return withSecurityHeaders(withCors(clientError("Request body must be valid JSON."), origin))
   }
 
@@ -222,11 +228,13 @@ export async function POST(request: NextRequest) {
   // [6] Schema validation: type checks, length caps, email format.
   const result = validate(body, ContactSchema)
   if (!result.ok) {
+    logEvent({ event: "validation_failed", route: "/api/contact", method: "POST", status: 422, durationMs: Date.now() - start, ip })
     return withSecurityHeaders(withCors(validationError(result.errors), origin))
   }
 
   // Safe cast: validate() guarantees these fields are present strings.
   // Required by the mail service call below.
+  // name/email/message are NOT logged — they are PII and are redacted by logEvent.
   const { name, email, message } = body as { name: string; email: string; message: string }
 
   try {
@@ -242,10 +250,10 @@ export async function POST(request: NextRequest) {
     //
     await withTimeout(contactMail.sendContactMail({ name, email, message }), getMailSendTimeoutMs())
 
-    console.log(JSON.stringify({ event: "mail_success", ip, timestamp: new Date().toISOString() }))
+    logEvent({ event: "mail_success", route: "/api/contact", method: "POST", status: 200, durationMs: Date.now() - start, ip })
     return withSecurityHeaders(withCors(ok({ message: "Message received successfully! We'll get back to you soon." }), origin))
   } catch (err) {
-    console.log(JSON.stringify({ event: "mail_failure", ip, error: (err as Error).message, timestamp: new Date().toISOString() }))
+    logEvent({ event: "mail_failure", route: "/api/contact", method: "POST", status: 500, durationMs: Date.now() - start, ip, error: (err as Error).message })
     return withSecurityHeaders(withCors(serverError(err), origin))
   }
 }

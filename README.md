@@ -129,6 +129,28 @@ npm start         # Start production server
 
 ## 📡 API Endpoints
 
+> Full contract details, response schemas, and structured log specifications
+> are in [`docs/api-contracts.md`](./docs/api-contracts.md).
+
+### `GET /api/health`
+
+Returns service health. Always responds **HTTP 200** — read the body `status`
+field to determine health state.
+
+**Response schema (stable — wave-1 contract):**
+
+```json
+{
+  "status": "ok" | "degraded",
+  "dependencies": { "redis": "ok" | "unavailable" },
+  "version": "string",
+  "timestamp": "ISO-8601"
+}
+```
+
+`status: "degraded"` means Redis is unavailable but the service is still
+accepting requests (fail-open). See [`docs/api-contracts.md`](./docs/api-contracts.md) for full semantics.
+
 ### `POST /api/contact`
 
 Submit a contact form message. Protected by CSRF validation, rate limiting, and input sanitization.
@@ -146,16 +168,16 @@ Submit a contact form message. Protected by CSRF validation, rate limiting, and 
 **Response (success):**
 
 ```json
-{ "success": true, "message": "Message sent successfully" }
+{ "success": true, "data": { "message": "Message received successfully! We'll get back to you soon." } }
 ```
 
-**Response (error):**
+**Response (validation error):**
 
 ```json
-{ "error": { "message": "Validation failed", "fields": { "email": "Invalid email" } } }
+{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": "Request validation failed.", "fields": { "email": "Invalid email address." } } }
 ```
 
-**Rate Limit:** 5 requests per IP per 15-minute window (configurable via `RATE_LIMIT_MAX`).
+**Rate Limit:** 5 requests per IP per 60-second window (configurable via `CONTACT_RATE_LIMIT_MAX` / `CONTACT_RATE_LIMIT_WINDOW_MS`). Redis-backed sliding window; falls back to in-memory on Redis failure.
 
 ---
 
