@@ -242,63 +242,172 @@ describe("rate-limit: window slide / expiry", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Fail-open behaviour
+// checkRedisHealth — specific failure mode coverage
 // ---------------------------------------------------------------------------
+//
+// The health endpoint's fail-open contract requires that ALL Redis failure
+// modes (connection refused, timeout, authentication error) result in
+// checkRedisHealth() returning "unavailable" — never throwing.
+//
+// Each test isolates one failure mode and verifies the exact return value so
+// regressions in the catch-all path are caught early.
 
-describe("rate-limit: fail-open on Redis errors", () => {
+describe("checkRedisHealth: connection-refused failure mode", () => {
   afterEach(() => {
     delete process.env.REDIS_URL
   })
 
-  it("falls back to in-memory (fail-open) when Redis connect throws", async () => {
+  it("returns 'unavailable' (never throws) when Redis connect is refused (ECONNREFUSED)", async () => {
     process.env.REDIS_URL = "redis://localhost:6379"
     vi.resetModules()
+
+    const connRefusedError = new Error("connect ECONNREFUSED 127.0.0.1:6379")
+    connRefusedError.name = "Error"
+    ;(connRefusedError as NodeJS.ErrnoException).code = "ECONNREFUSED"
 
     const { default: RedisMock } = await import("ioredis")
     ;(RedisMock as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-      connect: vi.fn().mockRejectedValue(new Error("ECONNREFUSED")),
+      connect: vi.fn().mockRejectedValue(connRefusedError),
       eval: vi.fn(),
       on: vi.fn(),
+      ping: vi.fn(),
     }))
 
-    const { isRateLimited } = await import("./rate-limit")
-    // Must not throw; first request should be allowed (fail-open)
-    expect(await isRateLimited("10.1.1.1")).toBe(false)
+    const { checkRedisHealth } = await import("./rate-limit")
+    // Must not throw — fail-open contract
+    const result = await checkRedisHealth()
+    expect(result).toBe("unavailable")
+  })
+})
+
+describe("checkRedisHealth: timeout failure mode", () => {
+  afterEach(() => {
+    delete process.env.REDIS_URL
   })
 
-  it("falls back to in-memory (fail-open) when Redis eval throws mid-request", async () => {
+  it("returns 'unavailable' (never throws) when Redis connect times out (ETIMEDOUT)", async () => {
     process.env.REDIS_URL = "redis://localhost:6379"
     vi.resetModules()
 
-    const mockEval = vi.fn().mockRejectedValue(new Error("Redis connection lost"))
+    const timeoutError = new Error("connect ETIMEDOUT")
+    timeoutError.name = "Error"
+    ;(timeoutError as NodeJS.ErrnoException).code = "ETIMEDOUT"
+
+    const { default: RedisMock } = await import("ioredis")
+    ;(RedisMock as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+      connect: vi.fn().mockRejectedValue(timeoutError),
+      eval: vi.fn(),
+      on: vi.fn(),
+      ping: vi.fn(),
+    }))
+
+    const { checkRedisHealth } = await import("./rate-limit")
+    const result = await checkRedisHealth()
+    expect(result).toBe("unavailable")
+  })
+
+  it("returns 'unavailable' when ping times out after successful connect", async () => {
+    process.env.REDIS_URL = "redis://localhost:6379"
+    vi.resetModules()
+
+    const pingTimeoutError = new Error("Command timed out")
+    pingTimeoutError.name = "Error"
+
     const { default: RedisMock } = await import("ioredis")
     ;(RedisMock as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       connect: vi.fn().mockResolvedValue(undefined),
-      eval: mockEval,
+      eval: vi.fn().mockResolvedValue(0),
       on: vi.fn((event: string, cb: () => void) => {
         if (event === "ready") cb()
       }),
+      ping: vi.fn().mockRejectedValue(pingTimeoutError),
     }))
 
-    const { isRateLimited } = await import("./rate-limit")
-    // Must not throw; first in-memory request should be allowed
-    expect(await isRateLimited("10.1.1.2")).toBe(false)
+    const { checkRedisHealth } = await import("./rate-limit")
+    const result = await checkRedisHealth()
+    expect(result).toBe("unavailable")
+  })
+})
+
+describe("checkRedisHealth: authentication failure mode", () => {
+  afterEach(() => {
+    delete process.env.REDIS_URL
   })
 
-  it("does not block the first request when Redis is down (not fail-closed)", async () => {
+  it("returns 'unavailable' (never throws) when Redis authentication is rejected (WRONGPASS)", async () => {
+    process.env.REDIS_URL = "redis://:wrongpassword@localhost:6379"
+    vi.resetModules()
+
+    const authError = new Error("WRONGPASS invalid username-password pair or user is disabled.")
+    authError.name = "ReplyError"
+
+    const { default: RedisMock } = await import("ioredis")
+    ;(RedisMock as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+      connect: vi.fn().mockRejectedValue(authError),
+      eval: vi.fn(),
+      on: vi.fn(),
+      ping: vi.fn(),
+    }))
+
+    const { checkRedisHealth } = await import("./rate-limit")
+    const result = await checkRedisHealth()
+    expect(result).toBe("unavailable")
+  })
+
+  it("returns 'unavailable' when ping fails with auth error after connect", async () => {
+    process.env.REDIS_URL = "redis://:wrongpassword@localhost:6379"
+    vi.resetModules()
+
+    const authError = new Error("NOAUTH Authentication required.")
+    authError.name = "ReplyError"
+
+    const { default: RedisMock } = await import("ioredis")
+    ;(RedisMock as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+      connect: vi.fn().mockResolvedValue(undefined),
+      eval: vi.fn().mockResolvedValue(0),
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === "ready") cb()
+      }),
+      ping: vi.fn().mockRejectedValue(authError),
+    }))
+
+    const { checkRedisHealth } = await import("./rate-limit")
+    const result = await checkRedisHealth()
+    expect(result).toBe("unavailable")
+  })
+})
+
+describe("checkRedisHealth: healthy connection", () => {
+  afterEach(() => {
+    delete process.env.REDIS_URL
+  })
+
+  it("returns 'connected' when Redis is reachable and ping succeeds", async () => {
     process.env.REDIS_URL = "redis://localhost:6379"
     vi.resetModules()
 
     const { default: RedisMock } = await import("ioredis")
     ;(RedisMock as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-      connect: vi.fn().mockRejectedValue(new Error("timeout")),
-      eval: vi.fn(),
-      on: vi.fn(),
+      connect: vi.fn().mockResolvedValue(undefined),
+      eval: vi.fn().mockResolvedValue(0),
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === "ready") cb()
+      }),
+      ping: vi.fn().mockResolvedValue("PONG"),
     }))
 
-    const { isRateLimited } = await import("./rate-limit")
-    // Fail-open contract: Redis down must NOT make the first request return true
-    const result = await isRateLimited("10.1.1.3")
-    expect(result).toBe(false)
+    const { checkRedisHealth } = await import("./rate-limit")
+    const result = await checkRedisHealth()
+    expect(result).toBe("connected")
+  })
+
+  it("returns 'unavailable' when no Redis env vars are configured", async () => {
+    delete process.env.REDIS_URL
+    delete process.env.REDIS_HOST
+    vi.resetModules()
+
+    const { checkRedisHealth } = await import("./rate-limit")
+    const result = await checkRedisHealth()
+    expect(result).toBe("unavailable")
   })
 })
