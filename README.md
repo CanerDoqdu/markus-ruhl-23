@@ -77,16 +77,146 @@ Professional portfolio project showcasing advanced web development skills throug
 
 - **Node.js** 18.x or higher
 - **npm** 9.x or **yarn** 1.22.x
+
+### Installation
+
+```bash
+git clone https://github.com/CanerDoqdu/markus-ruhl-23.git
+cd markus-ruhl-23
+npm install
+```
+
+### Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in the values:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_SITE_URL` | Yes | Production URL (e.g., `https://markusruhl.com`) |
+| `RESEND_API_KEY` | No* | Resend API key for email delivery |
+| `SMTP_HOST` | No* | SMTP server hostname (fallback transport) |
+| `SMTP_PORT` | No | SMTP port (default: 587) |
+| `SMTP_USER` | No | SMTP authentication username |
+| `SMTP_PASS` | No | SMTP authentication password |
+| `CONTACT_EMAIL` | Yes | Recipient email for contact form submissions |
+| `CSRF_SECRET` | Yes | Secret for CSRF token generation (min 32 chars) |
+| `RATE_LIMIT_MAX` | No | Max contact submissions per IP per window (default: 5) |
+
+\* At least one mail transport (`RESEND_API_KEY` or `SMTP_HOST`) should be configured in production. Without either, emails are logged to the console.
+
+### Development
+
+```bash
+npm run dev       # Start dev server at http://localhost:3000
+npm run lint      # Run ESLint
+npm run type-check # TypeScript strict check
+npm test          # Run unit tests (Vitest)
+npm run test:e2e  # Run end-to-end tests (Playwright)
+```
+
+### Production Build
+
+```bash
+npm run build     # Create optimized production build
+npm start         # Start production server
+```
+
 ---
 
-## 🛠️ Built With
+## 📡 API Endpoints
 
-This project demonstrates proficiency in:
-- Modern React architecture and patterns
-- WebGL programming and 3D graphics
-- Animation engineering with multiple libraries
-- Performance optimization techniques
-- TypeScript and type safety
-- Responsive design and mobile optimization
-- Build tooling and deployment workflows
+### `POST /api/contact`
+
+Submit a contact form message. Protected by CSRF validation, rate limiting, and input sanitization.
+
+**Request Body:**
+
+```json
+{
+  "name": "string (2-100 chars, required)",
+  "email": "string (valid email, required)",
+  "message": "string (10-5000 chars, required)"
+}
+```
+
+**Response (success):**
+
+```json
+{ "success": true, "message": "Message sent successfully" }
+```
+
+**Response (error):**
+
+```json
+{ "error": { "message": "Validation failed", "fields": { "email": "Invalid email" } } }
+```
+
+**Rate Limit:** 5 requests per IP per 15-minute window (configurable via `RATE_LIMIT_MAX`).
+
+---
+
+## 📬 Mail Provider Setup
+
+### Option 1: Resend (Recommended)
+
+1. Create a free account at [resend.com](https://resend.com)
+2. Verify your sending domain
+3. Generate an API key and set `RESEND_API_KEY` in `.env.local`
+
+### Option 2: SMTP (Gmail, SendGrid, etc.)
+
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASS` in `.env.local`. Example for Gmail:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASS=your-app-password
+```
+
+### Option 3: Console Fallback (Development)
+
+If neither `RESEND_API_KEY` nor `SMTP_HOST` is set, emails are logged to `stdout` as structured JSON. This is suitable for local development only.
+
+---
+
+## 🚢 Deployment
+
+### Vercel (Recommended)
+
+```bash
+npm i -g vercel
+vercel --prod
+```
+
+Set all environment variables in the Vercel dashboard under **Settings → Environment Variables**.
+
+### Docker
+
+```bash
+docker build -t markus-ruhl-23 .
+docker run -p 3000:3000 --env-file .env.local markus-ruhl-23
+```
+
+### Self-Hosted (PM2)
+
+```bash
+npm run build
+pm2 start npm --name "markus-ruhl" -- start
+```
+
+### Post-Deployment Checklist
+
+- [ ] All environment variables are set
+- [ ] `NEXT_PUBLIC_SITE_URL` points to the production domain
+- [ ] DNS records are configured (A/CNAME)
+- [ ] SSL/TLS is active (HTTPS)
+- [ ] Mail transport is verified (send a test via `/contact`)
+- [ ] Sitemap is accessible at `/sitemap.xml`
+- [ ] Open Graph image loads correctly when URL is shared
+- [ ] Lighthouse score targets: Performance ≥90, Accessibility 100, Best Practices 100, SEO 100
 

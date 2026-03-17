@@ -75,6 +75,21 @@ export const metadata: Metadata = {
   },
 }
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: SITE_CONFIG.name,
+  url: SITE_CONFIG.url,
+  description: SITE_CONFIG.description,
+  image: SITE_CONFIG.ogImage,
+  sameAs: [
+    "https://instagram.com/markusruhl_official",
+    "https://youtube.com/@markusruhl",
+  ],
+  jobTitle: "Professional Bodybuilder",
+  knowsAbout: ["Bodybuilding", "Fitness", "Training", "Nutrition"],
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -82,6 +97,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${ptSans.variable} ${raleway.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body>
         {/* Grain overlay for cinematic effect */}
         <div className="grain-overlay" aria-hidden="true" />
