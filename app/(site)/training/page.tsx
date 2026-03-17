@@ -13,7 +13,7 @@ export default function TrainingPage() {
   return (
     <>
       <ScrollProgress />
-      <main>
+      <main id="main-content">
         {/* Hero Section */}
         <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-main via-blue/10 to-main px-6 pt-32">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(88,103,182,0.1),transparent_70%)]" />
@@ -26,7 +26,7 @@ export default function TrainingPage() {
             <p className="text-gray-400 text-xl md:text-2xl mb-8">
               Decades of experience distilled into proven methodologies.
             </p>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-300 text-base sm:text-lg max-w-2xl mx-auto">
               Success in bodybuilding isn't about magic formulas or secret techniques.
               It's about consistency, discipline, and unwavering commitment to excellence.
             </p>
@@ -79,3 +79,4 @@ export default function TrainingPage() {
     </>
   )
 }
+

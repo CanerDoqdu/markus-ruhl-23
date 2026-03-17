@@ -151,7 +151,7 @@ export default function InteractiveTimeline() {
               </span>
             </h2>
           </div>
-          <p className="text-gray-500 text-sm max-w-md leading-relaxed font-light lg:text-right">
+          <p className="text-gray-300 text-sm max-w-md leading-relaxed font-light lg:text-right">
             From 54.5kg beginner to the most massive bodybuilder in history.
             A 14-year journey of relentless growth and dominance.
           </p>
@@ -208,7 +208,7 @@ export default function InteractiveTimeline() {
                       </span>
                     </div>
                     <p className={`text-sm truncate transition-colors duration-300 motion-reduce:transition-none ${
-                      activeIndex === index ? "text-white" : "text-gray-600 group-hover:text-gray-400"
+                      activeIndex === index ? "text-white" : "text-gray-400 group-hover:text-gray-400"
                     }`}>
                       {phase.title}
                     </p>
@@ -239,8 +239,8 @@ export default function InteractiveTimeline() {
                 />
               </div>
               <div className="flex justify-between mt-2">
-                <span className="text-[10px] font-mono text-gray-700">1990</span>
-                <span className="text-[10px] font-mono text-gray-700">2009</span>
+                <span className="text-[10px] font-mono text-gray-300">1990</span>
+                <span className="text-[10px] font-mono text-gray-300">2009</span>
               </div>
             </div>
           </div>
@@ -296,7 +296,7 @@ export default function InteractiveTimeline() {
                         <p className="text-5xl font-black bg-gradient-to-b from-[#FFFF92] to-[#FFFF92]/30 bg-clip-text text-transparent">
                           {activePhase.stat.value}
                         </p>
-                        <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest mt-2">
+                        <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest mt-2">
                           {activePhase.stat.label}
                         </p>
                       </div>
@@ -313,7 +313,7 @@ export default function InteractiveTimeline() {
                         <div className="w-1 h-8 bg-[#5867B6] rounded-full" />
                         <div>
                           <p className="text-white font-bold text-sm">{activePhase.title}</p>
-                          <p className="text-gray-500 text-xs">{activePhase.year}</p>
+                          <p className="text-gray-300 text-xs">{activePhase.year}</p>
                         </div>
                       </div>
                     </div>
@@ -358,13 +358,13 @@ export default function InteractiveTimeline() {
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-500 text-sm leading-relaxed">
+                <p className="text-gray-300 text-sm leading-relaxed">
                   {activePhase.description}
                 </p>
 
                 {/* Highlights */}
                 <div className="space-y-3">
-                  <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">
+                  <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">
                     Key Highlights
                   </p>
                   {activePhase.highlights.map((highlight, i) => (
@@ -388,7 +388,7 @@ export default function InteractiveTimeline() {
                       <p className="text-2xl font-black text-[#FFFF92]">
                         {activePhase.stat.value}
                       </p>
-                      <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">
+                      <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">
                         {activePhase.stat.label}
                       </p>
                     </div>
@@ -432,7 +432,7 @@ export default function InteractiveTimeline() {
                   <span className="text-3xl font-black text-white">{stat.value}</span>
                   <span className="text-sm font-mono text-[#FFFF92]">{stat.suffix}</span>
                 </div>
-                <p className="text-xs font-mono text-gray-600 uppercase tracking-wider mt-1">{stat.label}</p>
+                <p className="text-xs font-mono text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -441,3 +441,4 @@ export default function InteractiveTimeline() {
     </section>
   )
 }
+

@@ -115,7 +115,7 @@ export default function LegacyPage() {
                     <blockquote className="text-2xl md:text-3xl font-bold text-white leading-relaxed mb-4">
                       "{item.quote}"
                     </blockquote>
-                    <p className="text-gray-500 text-sm">{item.context}</p>
+                    <p className="text-gray-300 text-sm">{item.context}</p>
                   </div>
                 </Reveal>
               ))}
@@ -152,7 +152,7 @@ export default function LegacyPage() {
                 <Heading className="mb-4">
                   PARTNERS & SPONSORS
                 </Heading>
-                <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
+                <p className="text-gray-300 text-sm max-w-md mx-auto leading-relaxed">
                   Backed by the industry&apos;s most respected brands — the same standard of excellence, no compromises.
                 </p>
               </div>
@@ -181,7 +181,7 @@ export default function LegacyPage() {
 
                     {/* Bottom label */}
                     <div className="mt-3 text-center">
-                      <span className="text-[9px] font-mono text-gray-600 uppercase tracking-[0.2em] group-hover:text-yellow/60 transition-colors duration-300">
+                      <span className="text-[9px] font-mono text-gray-400 uppercase tracking-[0.2em] group-hover:text-yellow/60 transition-colors duration-300">
                         Partner 0{num}
                       </span>
                     </div>
@@ -200,7 +200,7 @@ export default function LegacyPage() {
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <p className="text-2xl font-black text-white">{stat.value}</p>
-                    <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em] mt-1">{stat.label}</p>
+                    <p className="text-[10px] font-mono text-gray-300 uppercase tracking-[0.2em] mt-1">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -220,3 +220,4 @@ export default function LegacyPage() {
     </>
   )
 }
+

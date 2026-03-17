@@ -71,7 +71,7 @@ export default function HomePage() {
   return (
     <>
       <ScrollProgress />
-      <main>
+      <main id="main-content">
         <PremiumHero />
         <Discipline />
         <LayerStack />

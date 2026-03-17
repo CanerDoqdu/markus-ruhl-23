@@ -108,7 +108,7 @@ export default function MediaPreview() {
               <span className="block text-white">& Stats</span>
             </h2>
           </div>
-          <p className="text-gray-500 text-sm max-w-md leading-relaxed font-light lg:text-right">
+          <p className="text-gray-300 text-sm max-w-md leading-relaxed font-light lg:text-right">
             Decades of dominance captured in moments. The power, the passion, the legacy — all in numbers.
           </p>
         </motion.div>
@@ -165,10 +165,10 @@ export default function MediaPreview() {
                     } border-b border-gray-800/30`}
                   >
                     <div className="flex items-center gap-2">
-                      <svg className="w-2.5 h-2.5 text-gray-600" viewBox="0 0 8 8" fill="currentColor">
+                      <svg className="w-2.5 h-2.5 text-gray-400" viewBox="0 0 8 8" fill="currentColor">
                         <path d="M0 4 L4 0 L8 4 L4 8 Z" />
                       </svg>
-                      <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                      <span className="text-[10px] font-mono text-gray-300 uppercase tracking-widest">
                         {stat.label}
                       </span>
                     </div>
@@ -190,7 +190,7 @@ export default function MediaPreview() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex justify-end mt-4"
         >
-          <span className="text-[10px] font-mono text-gray-600 uppercase tracking-[0.3em]">
+          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-[0.3em]">
             Gallery
           </span>
         </motion.div>
@@ -198,3 +198,4 @@ export default function MediaPreview() {
     </section>
   )
 }
+

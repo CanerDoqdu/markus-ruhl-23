@@ -99,7 +99,7 @@ export default function TrophyShowcase() {
                     </span>
                   </h2>
                 </div>
-                <p className="text-xs font-mono text-gray-600 uppercase tracking-[0.3em] mt-2">
+                <p className="text-xs font-mono text-gray-400 uppercase tracking-[0.3em] mt-2">
                   Best Year · Peak Performance
                 </p>
               </motion.div>
@@ -109,7 +109,7 @@ export default function TrophyShowcase() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.15 }}
-                className="text-gray-500 text-sm leading-relaxed max-w-sm"
+                className="text-gray-300 text-sm leading-relaxed max-w-sm"
               >
                 The pinnacle of mass monster bodybuilding. Night of Champions Victory
                 at 129.5kg — the most extraordinary physique ever presented on the
@@ -124,7 +124,7 @@ export default function TrophyShowcase() {
                 transition={{ duration: 0.5, delay: 0.25 }}
                 className="space-y-3"
               >
-                <p className="text-[10px] font-mono text-gray-600 uppercase tracking-[0.3em]">
+                <p className="text-[10px] font-mono text-gray-400 uppercase tracking-[0.3em]">
                   Achievements
                 </p>
                 <div className="flex items-center gap-[1px]">
@@ -232,7 +232,7 @@ export default function TrophyShowcase() {
               >
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-[1px] bg-gray-700" />
-                  <span className="text-[10px] font-mono text-gray-700 uppercase tracking-[0.2em]">
+                  <span className="text-[10px] font-mono text-gray-300 uppercase tracking-[0.2em]">
                     Best Year
                   </span>
                 </div>
@@ -245,3 +245,5 @@ export default function TrophyShowcase() {
     </section>
   )
 }
+
+

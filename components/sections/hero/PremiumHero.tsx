@@ -278,7 +278,7 @@ const StatLine = ({
     </div>
     <div className="text-right">
       <p className="text-[#FFFF92] text-xs font-mono uppercase tracking-[0.2em]">{value}</p>
-      <p className="text-gray-500 text-[10px] font-mono uppercase tracking-wider">{label}</p>
+      <p className="text-gray-300 text-[10px] font-mono uppercase tracking-wider">{label}</p>
     </div>
   </motion.div>
 )
@@ -340,7 +340,7 @@ export default function PremiumHero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.3 }}
-                className="text-xs font-mono text-gray-500 uppercase tracking-[0.3em]"
+                className="text-xs font-mono text-gray-300 uppercase tracking-[0.3em]"
               >
                 UNLEASH THE POWER OF
               </motion.p>
@@ -356,7 +356,7 @@ export default function PremiumHero() {
                 </h1>
               </div>
 
-              <p className="text-gray-500 text-sm max-w-sm leading-relaxed font-light">
+              <p className="text-gray-300 text-sm sm:text-base max-w-sm leading-relaxed font-light">
                 One of the biggest bodybuilders who ever lived.
                 IFBB Professional, dominating the stage since 1990.
               </p>
@@ -390,7 +390,7 @@ export default function PremiumHero() {
                 className="flex items-center gap-2 mb-2"
               >
                 <div className={`w-2 h-2 rounded-full bg-[#FFFF92] ${shouldReduceMotion ? "" : "animate-pulse"}`} />
-                <p className="text-xs font-mono text-gray-500 uppercase tracking-[0.2em]">Career Stats</p>
+                <p className="text-xs font-mono text-gray-300 uppercase tracking-[0.2em]">Career Stats</p>
               </motion.div>
 
               <StatLine label="Years Pro" value="14 YEARS" delay={0.6} shouldReduceMotion={shouldReduceMotion} />
@@ -410,7 +410,7 @@ export default function PremiumHero() {
                 </div>
                 <div className="text-right">
                   <p className="text-white font-bold text-xs">Markus Rühl</p>
-                  <p className="text-gray-600 text-[10px] font-mono">IFBB PROFESSIONAL</p>
+                  <p className="text-gray-400 text-[10px] font-mono">IFBB PROFESSIONAL</p>
                 </div>
               </motion.div>
             </motion.div>
@@ -427,7 +427,7 @@ export default function PremiumHero() {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
       >
         <div className="flex flex-col items-center gap-2">
-          <p className="text-gray-500 text-xs uppercase tracking-widest">Scroll</p>
+          <p className="text-gray-300 text-xs uppercase tracking-widest">Scroll</p>
           <motion.div
             animate={shouldReduceMotion ? { y: 0 } : { y: [0, 8, 0] }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
@@ -440,3 +440,4 @@ export default function PremiumHero() {
     </section>
   )
 }
+

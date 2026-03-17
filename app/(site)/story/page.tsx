@@ -13,7 +13,7 @@ export default function StoryPage() {
   return (
     <>
       <ScrollProgress />
-      <main>
+      <main id="main-content">
         <StoryHero />
         <StoryContent />
         <SuccessStories />

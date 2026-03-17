@@ -41,7 +41,7 @@ export default function Footer() {
               <span className="text-yellow">MARKUS</span>
               <span className="text-white ml-2">RÜHL</span>
             </h2>
-            <p className="text-gray-500 text-sm leading-relaxed max-w-sm mb-8">
+            <p className="text-gray-300 text-sm leading-relaxed max-w-sm mb-8">
               The official brand experience of bodybuilding legend Markus Rühl.
               Discipline. Power. Legacy.
             </p>
@@ -55,7 +55,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.name}
-                  className="w-9 h-9 rounded-lg border border-gray-800/60 flex items-center justify-center text-gray-500 hover:text-yellow hover:border-yellow/30 transition-all duration-300 motion-reduce:transition-none"
+                  className="w-9 h-9 rounded-lg border border-gray-800/60 flex items-center justify-center text-gray-300 hover:text-yellow hover:border-yellow/30 transition-all duration-300 motion-reduce:transition-none"
                 >
                   {SOCIAL_ICONS[social.icon] ?? (
                     <span className="text-xs font-bold">{social.name[0]}</span>
@@ -67,7 +67,7 @@ export default function Footer() {
 
           {/* Navigation — spans 3 cols */}
           <div className="md:col-span-3">
-            <p className="text-[10px] font-mono uppercase tracking-[0.35em] text-gray-600 mb-5">
+            <p className="text-[10px] font-mono uppercase tracking-[0.35em] text-gray-400 mb-5">
               Navigation
             </p>
             <ul className="space-y-3">
@@ -86,10 +86,10 @@ export default function Footer() {
 
           {/* Contact / CTA — spans 4 cols */}
           <div className="md:col-span-4">
-            <p className="text-[10px] font-mono uppercase tracking-[0.35em] text-gray-600 mb-5">
+            <p className="text-[10px] font-mono uppercase tracking-[0.35em] text-gray-400 mb-5">
               Get In Touch
             </p>
-            <p className="text-gray-500 text-sm leading-relaxed mb-6">
+            <p className="text-gray-300 text-sm leading-relaxed mb-6">
               For business inquiries, coaching, and event bookings.
             </p>
             <Link
@@ -120,7 +120,7 @@ export default function Footer() {
       {/* ——— Bottom bar ——— */}
       <div className="border-t border-gray-800/30">
         <div className="max-w-[1400px] mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-gray-700 text-xs font-mono">
+          <p className="text-gray-400 text-xs font-mono">
             &copy; {currentYear} Markus Rühl. All rights reserved.
           </p>
           <p className="text-gray-400 text-[10px] font-mono uppercase tracking-[0.3em]">
@@ -131,3 +131,4 @@ export default function Footer() {
     </footer>
   )
 }
+
