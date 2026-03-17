@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, ReactNode } from "react"
-import { motion, useInView, useAnimation, Variants } from "framer-motion"
+import { motion, useInView, useAnimation, useReducedMotion, Variants } from "framer-motion"
 
 interface RevealProps {
   children: ReactNode
@@ -26,6 +26,7 @@ export default function Reveal({
   once = true,
 }: RevealProps) {
   const ref = useRef(null)
+  const shouldReduceMotion = useReducedMotion()
   const isInView = useInView(ref, { once, margin: "-100px" })
   const controls = useAnimation()
 
@@ -35,22 +36,27 @@ export default function Reveal({
   }
 
   useEffect(() => {
+    if (shouldReduceMotion) {
+      controls.start("visible")
+      return
+    }
+
     if (isInView) {
       controls.start("visible")
     } else {
       controls.start("hidden")
     }
-  }, [isInView, controls])
+  }, [controls, isInView, shouldReduceMotion])
 
   return (
     <motion.div
       ref={ref}
-      initial="hidden"
+      initial={shouldReduceMotion ? "visible" : "hidden"}
       animate={controls}
       variants={variants}
       transition={{
-        duration,
-        delay,
+        duration: shouldReduceMotion ? 0 : duration,
+        delay: shouldReduceMotion ? 0 : delay,
         ease: [0.25, 0.4, 0.25, 1],
       }}
       className={className}

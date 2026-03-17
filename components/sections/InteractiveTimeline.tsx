@@ -110,7 +110,7 @@ export default function InteractiveTimeline() {
   }
 
   return (
-    <section className="relative bg-main py-32 px-6 overflow-hidden">
+    <section className="relative bg-main py-24 sm:py-32 px-4 sm:px-6 overflow-hidden">
       {/* Background grid pattern */}
       <div className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -130,7 +130,7 @@ export default function InteractiveTimeline() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6 }}
-          className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-20 gap-6"
+           className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-16 sm:mb-20 gap-6"
         >
           <div>
             <motion.p
@@ -142,7 +142,7 @@ export default function InteractiveTimeline() {
             >
               The Journey
             </motion.p>
-            <h2 className="text-5xl lg:text-7xl font-black leading-[0.95]">
+             <h2 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[0.95]">
               <span className="block bg-gradient-to-r from-[#FFFF92] via-[#FFD700] to-[#FFFF92] bg-clip-text text-transparent">
                 Career
               </span>
@@ -234,7 +234,8 @@ export default function InteractiveTimeline() {
               <div className="h-[2px] bg-gray-800 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-[#FFFF92] to-[#5867B6]"
-                  animate={{ width: `${((activeIndex + 1) / TIMELINE_PHASES.length) * 100}%` }}
+                  style={{ transformOrigin: "left center" }}
+                  animate={{ scaleX: (activeIndex + 1) / TIMELINE_PHASES.length }}
                   transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
                 />
               </div>

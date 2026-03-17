@@ -21,6 +21,36 @@
   body {
     @apply bg-main text-white font-ptsans;
   }
+
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    transform: translateY(-200%);
+    background: #ffff92;
+    color: #0a0c13;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    z-index: 10000;
+    font-weight: 700;
+    transition: transform 0.2s ease;
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid #5867b6;
+    outline-offset: 2px;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid #ffff92;
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -140,5 +170,19 @@
 
   .delay-150 {
     animation-delay: 150ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
