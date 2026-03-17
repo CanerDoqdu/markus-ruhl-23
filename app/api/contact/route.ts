@@ -167,6 +167,14 @@ export async function OPTIONS(request: NextRequest) {
 //                            input (→ 422 with per-field detail).
 //
 export async function POST(request: NextRequest) {
+  // Extract IP early so it is available for structured logging on every path.
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown"
+
+  console.log(JSON.stringify({ event: "contact_request", ip, timestamp: new Date().toISOString() }))
+
   // [1] CSRF: reject cross-origin requests.
   // Falls back to deriving the expected origin from the request URL so the
   // check is fail-closed even when NEXT_PUBLIC_SITE_URL is not configured.
@@ -186,11 +194,8 @@ export async function POST(request: NextRequest) {
   }
 
   // [3] Rate limiting — 5 requests per minute per IP.
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown"
   if (await isRateLimited(ip)) {
+    console.log(JSON.stringify({ event: "rate_limit_hit", ip, timestamp: new Date().toISOString() }))
     return withSecurityHeaders(withCors(clientError("Too many requests. Please try again later.", "BAD_REQUEST", 429), origin))
   }
 
@@ -224,9 +229,6 @@ export async function POST(request: NextRequest) {
   // Required by the mail service call below.
   const { name, email, message } = body as { name: string; email: string; message: string }
 
-  // Intentionally not logging PII (name, email, message content).
-  console.log("Contact form submission received", { timestamp: new Date().toISOString() })
-
   try {
     // ALL mail/notification service calls MUST live inside this try/catch.
     // A service failure (timeout, auth error, API 5xx, SMTP reject) must be
@@ -240,10 +242,10 @@ export async function POST(request: NextRequest) {
     //
     await withTimeout(contactMail.sendContactMail({ name, email, message }), getMailSendTimeoutMs())
 
+    console.log(JSON.stringify({ event: "mail_success", ip, timestamp: new Date().toISOString() }))
     return withSecurityHeaders(withCors(ok({ message: "Message received successfully! We'll get back to you soon." }), origin))
   } catch (err) {
-    // Log request context alongside the error so on-call has IP + timing.
-    console.error("[contact] mail service error", { ip, timestamp: new Date().toISOString() })
+    console.log(JSON.stringify({ event: "mail_failure", ip, error: (err as Error).message, timestamp: new Date().toISOString() }))
     return withSecurityHeaders(withCors(serverError(err), origin))
   }
 }

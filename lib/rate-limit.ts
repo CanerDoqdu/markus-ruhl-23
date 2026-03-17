@@ -107,6 +107,7 @@ type RedisLikeClient = {
   connect: () => Promise<unknown>
   eval: (script: string, numkeys: number, ...args: Array<string | number>) => Promise<unknown>
   on: (event: "error" | "ready", callback: (err?: Error) => void) => void
+  ping: () => Promise<string>
 }
 
 let redisClient: RedisLikeClient | null = null
@@ -166,8 +167,8 @@ async function isRateLimitedRedis(ip: string): Promise<boolean> {
     if (!Number.isFinite(result)) return isRateLimitedMemory(ip)
     return result === 1
   } catch (err) {
-    // FAIL-OPEN: Redis op failed mid-request — degrade to in-memory limiter.
-    console.error("[rate-limit] Redis op error — falling back to in-memory:", (err as Error).message)
+    // Intentional: rate limiter fails open on Redis unavailability to preserve service availability.
+    console.log(JSON.stringify({ event: "rate_limit_redis_error", error: (err as Error).message, timestamp: new Date().toISOString() }))
     return isRateLimitedMemory(ip)
   }
 }
@@ -180,4 +181,20 @@ export async function isRateLimited(ip: string): Promise<boolean> {
     return isRateLimitedRedis(ip)
   }
   return isRateLimitedMemory(ip)
+}
+
+/**
+ * Lightweight Redis health check for the /api/health endpoint.
+ * Reuses the shared lazy-init client so no new connection is opened.
+ * Always resolves — never throws.
+ */
+export async function checkRedisHealth(): Promise<"connected" | "unavailable"> {
+  const client = await getRedisClient()
+  if (!client || !redisAvailable) return "unavailable"
+  try {
+    await client.ping()
+    return "connected"
+  } catch {
+    return "unavailable"
+  }
 }
