@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { SOCIAL_LINKS } from "@/lib/constants"
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
@@ -27,12 +27,13 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
 }
 
 export default function FinalCTA() {
+  const shouldReduceMotion = useReducedMotion()
   return (
     <section className="relative bg-main overflow-hidden">
       {/* Top border glow */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow/30 to-transparent" />
 
-      <div className="max-w-[1400px] mx-auto px-6 py-32 lg:py-40">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-24 sm:py-32 lg:py-40">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           {/* Left — Main CTA text */}
           <div>
@@ -46,7 +47,7 @@ export default function FinalCTA() {
                 Be Part of It
               </p>
 
-              <h2 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tight mb-6">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tight mb-6">
                 <span className="text-white">Join</span>
                 <br />
                 <span className="text-white">The </span>
@@ -59,11 +60,11 @@ export default function FinalCTA() {
               </p>
 
               {/* CTA Button */}
-              <motion.a
-                href="/contact"
-                whileHover={{ x: 6 }}
-                className="group inline-flex items-center gap-4"
-              >
+                <motion.a
+                  href="/contact"
+                  whileHover={shouldReduceMotion ? undefined : { x: 6 }}
+                  className="group inline-flex items-center gap-4"
+                >
                 <span className="inline-flex items-center justify-center w-14 h-14 rounded-full border-2 border-yellow text-yellow group-hover:bg-yellow group-hover:text-main transition-all duration-300">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />

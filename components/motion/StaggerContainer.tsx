@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 
 interface StaggerContainerProps {
   children: ReactNode
@@ -14,19 +14,20 @@ export default function StaggerContainer({
   className = "",
   staggerDelay = 0.1,
 }: StaggerContainerProps) {
+  const shouldReduceMotion = useReducedMotion()
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: staggerDelay,
+        staggerChildren: shouldReduceMotion ? 0 : staggerDelay,
       },
     },
   }
 
   return (
     <motion.div
-      initial="hidden"
+      initial={shouldReduceMotion ? "visible" : "hidden"}
       whileInView="visible"
       viewport={{ once: true, margin: "-100px" }}
       variants={containerVariants}
@@ -43,13 +44,14 @@ interface StaggerItemProps {
 }
 
 export function StaggerItem({ children, className = "" }: StaggerItemProps) {
+  const shouldReduceMotion = useReducedMotion()
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5,
+        duration: shouldReduceMotion ? 0 : 0.5,
         ease: [0.25, 0.4, 0.25, 1],
       },
     },

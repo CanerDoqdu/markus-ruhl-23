@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { useState, useEffect } from "react"
 import Reveal from "@/components/motion/Reveal"
 
@@ -14,6 +14,7 @@ const steps = [
 ]
 
 export default function Discipline() {
+  const shouldReduceMotion = useReducedMotion()
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -107,14 +108,8 @@ export default function Discipline() {
                           ${item.color}08 3px
                         )`,
                       }}
-                      animate={{ 
-                        backgroundPosition: ["0px 0px", "0px 10px"],
-                      }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
+                      animate={shouldReduceMotion ? undefined : { backgroundPosition: ["0px 0px", "0px 10px"] }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity, ease: "linear" }}
                     />
                   )}
 
@@ -170,8 +165,8 @@ export default function Discipline() {
                         background: `conic-gradient(from 0deg, ${item.color}40, ${item.color}00)`,
                         filter: "blur(8px)",
                       }}
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                       animate={shouldReduceMotion ? undefined : { rotate: 360 }}
+                       transition={shouldReduceMotion ? { duration: 0 } : { duration: 8, repeat: Infinity, ease: "linear" }}
                     />
                   )}
                 </div>
