@@ -31,9 +31,6 @@ export default function HomePage() {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const startTime = Date.now()
-    const MINIMUM_LOADING_TIME = 2200 // Match progress bar animation (2s) + buffer
-    
     // Check if mobile
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024)
@@ -42,14 +39,9 @@ export default function HomePage() {
     checkMobile()
     window.addEventListener("resize", checkMobile)
 
-    // Wait for actual page load AND minimum time
+    // Wait for actual page load (no artificial delay)
     const handleLoad = () => {
-      const elapsed = Date.now() - startTime
-      const remainingTime = Math.max(0, MINIMUM_LOADING_TIME - elapsed)
-      
-      setTimeout(() => {
-        setIsLoading(false)
-      }, remainingTime)
+      setIsLoading(false)
     }
 
     if (document.readyState === "complete") {

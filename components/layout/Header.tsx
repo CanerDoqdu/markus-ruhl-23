@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
@@ -9,17 +9,79 @@ import { NAV_LINKS } from "@/lib/constants"
 import useMediaQuery from "@/hooks/useMediaQuery"
 import { cn } from "@/lib/utils"
 
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
   const isDesktop = useMediaQuery("(min-width: 1024px)")
   const shouldReduceMotion = useReducedMotion()
+  const menuRef = useRef<HTMLElement>(null)
+  const toggleBtnRef = useRef<HTMLButtonElement>(null)
 
+  // Close on desktop resize
   useEffect(() => {
     if (isDesktop && isMenuOpen) {
       setIsMenuOpen(false)
     }
   }, [isDesktop, isMenuOpen])
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isMenuOpen])
+
+  // Close on route change
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
+
+  // Escape key handler
+  useEffect(() => {
+    if (!isMenuOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMenuOpen(false)
+        toggleBtnRef.current?.focus()
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [isMenuOpen])
+
+  // Focus trap inside mobile menu
+  const handleMenuKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "Tab" || !menuRef.current) return
+
+    const focusable = menuRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+    if (focusable.length === 0) return
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }, [])
+
+  // Auto-focus first menu link when menu opens
+  useEffect(() => {
+    if (isMenuOpen && menuRef.current) {
+      const first = menuRef.current.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      first?.focus()
+    }
+  }, [isMenuOpen])
 
   const isActive = (href: string) => {
     if (href === "/#home") return pathname === "/"
@@ -62,9 +124,10 @@ export default function Header() {
             ) : (
               /* Mobile Menu Button */
               <button
+                ref={toggleBtnRef}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 rounded-lg bg-gradient-to-r from-blue to-purple hover:shadow-glow-blue transition-all motion-reduce:transition-none"
-                aria-label="Toggle menu"
+                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={isMenuOpen}
                 aria-controls="mobile-navigation"
               >
@@ -83,8 +146,12 @@ export default function Header() {
       <AnimatePresence>
         {!isDesktop && isMenuOpen && (
           <motion.nav
+            ref={menuRef}
             id="mobile-navigation"
+            role="dialog"
+            aria-modal="true"
             aria-label="Mobile navigation"
+            onKeyDown={handleMenuKeyDown}
             initial={shouldReduceMotion ? false : { opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
