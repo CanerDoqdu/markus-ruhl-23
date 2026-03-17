@@ -16,7 +16,7 @@ export default function LoadingSkeleton() {
           <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight">
             MARKUS RÜHL
           </h1>
-          <p className="text-gray-400 text-sm md:text-base mt-2 font-mono">
+          <p className="text-gray-300 text-sm md:text-base mt-2 font-mono">
             Loading Excellence...
           </p>
         </motion.div>
