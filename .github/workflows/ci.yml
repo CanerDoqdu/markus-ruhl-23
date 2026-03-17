@@ -40,6 +40,5 @@ jobs:
         run: npm test
 
       - name: Audit
-        # Only fail on critical-severity vulnerabilities; high-severity findings
-        # exist in dev/transitive deps with no runtime exposure.
-        run: npm audit --audit-level=critical
+        # Fail on high or critical vulnerabilities — blocks merge on any high/critical finding.
+        run: npm audit --audit-level=high
