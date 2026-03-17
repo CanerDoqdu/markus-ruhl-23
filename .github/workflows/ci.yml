@@ -1,6 +1,16 @@
 # CI pipeline: install -> lint -> build -> type-check -> test -> npm audit
 # Triggers on push to main and all pull requests.
 # Branch protection should require the "ci" job to pass before merging.
+#
+# Gate rationale:
+#   lint        — enforces code style and catches obvious errors early.
+#   build       — ensures next build succeeds; catches missing env, broken imports.
+#   type-check  — tsc --noEmit validates TypeScript without producing output.
+#   test        — vitest unit tests; must all pass before merge.
+#   audit       — blocks merge on any high/critical npm vulnerability (#65).
+#
+# Security: permissions are set to the minimum required (read-only) so the
+# GITHUB_TOKEN cannot be misused if a dependency or action is compromised.
 name: CI
 
 on:
@@ -9,10 +19,16 @@ on:
       - main
   pull_request:
 
+# Least-privilege token — this workflow only reads code, never writes or deploys.
+permissions:
+  contents: read
+
 jobs:
   ci:
     name: Install, Lint, Build, Test & Audit
     runs-on: ubuntu-latest
+    # Hard cap: prevent runaway jobs from consuming runner minutes indefinitely.
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -21,10 +37,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
+          # Pin to the LTS version declared in package.json engines field.
+          # Update both together to avoid CI/local version drift.
           node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
+        # npm ci is required (not npm install) for deterministic, lockfile-exact installs.
         run: npm ci
 
       - name: Lint
@@ -41,4 +60,7 @@ jobs:
 
       - name: Audit
         # Fail on high or critical vulnerabilities — blocks merge on any high/critical finding.
+        # Threshold set to 'high' per policy decision in PR #65.
+        # Do NOT downgrade to 'moderate' or add continue-on-error without an explicit
+        # security review and a documented exception in this file.
         run: npm audit --audit-level=high
