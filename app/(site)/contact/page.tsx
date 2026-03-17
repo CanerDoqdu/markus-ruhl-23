@@ -69,7 +69,7 @@ export default function ContactPage() {
                     <h3 className="text-lg font-bold text-white mb-2">
                       {info.title}
                     </h3>
-                    <p className="text-gray-500 text-sm mb-2">{info.description}</p>
+                    <p className="text-gray-300 text-sm mb-2">{info.description}</p>
                     <p className="text-yellow font-semibold text-sm">{info.value}</p>
                   </div>
                 </StaggerItem>
@@ -117,3 +117,4 @@ export default function ContactPage() {
     </>
   )
 }
+

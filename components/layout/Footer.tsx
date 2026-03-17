@@ -33,7 +33,7 @@ export default function Footer() {
       <div className="h-px bg-gradient-to-r from-transparent via-gray-800/60 to-transparent" />
 
       {/* ——— Main footer ——— */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-16">
+      <div className="max-w-[1400px] mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
           {/* Brand — spans 5 cols */}
           <div className="md:col-span-5">
@@ -55,7 +55,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.name}
-                  className="w-9 h-9 rounded-lg border border-gray-800/60 flex items-center justify-center text-gray-500 hover:text-yellow hover:border-yellow/30 transition-all duration-300 motion-reduce:transition-none"
+                  className="w-9 h-9 rounded-lg border border-gray-800/60 flex items-center justify-center text-gray-300 hover:text-yellow hover:border-yellow/30 transition-all duration-300 motion-reduce:transition-none"
                 >
                   {SOCIAL_ICONS[social.icon] ?? (
                     <span className="text-xs font-bold">{social.name[0]}</span>
@@ -120,10 +120,10 @@ export default function Footer() {
       {/* ——— Bottom bar ——— */}
       <div className="border-t border-gray-800/30">
         <div className="max-w-[1400px] mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-gray-500 text-xs font-mono">
+          <p className="text-gray-400 text-xs font-mono">
             &copy; {currentYear} Markus Rühl. All rights reserved.
           </p>
-          <p className="text-gray-400 text-[10px] font-mono uppercase tracking-[0.2em] sm:tracking-[0.3em] text-center sm:text-right">
+          <p className="text-gray-400 text-[10px] font-mono uppercase tracking-[0.3em]">
             Discipline &middot; Power &middot; Legacy
           </p>
         </div>
@@ -131,3 +131,4 @@ export default function Footer() {
     </footer>
   )
 }
+

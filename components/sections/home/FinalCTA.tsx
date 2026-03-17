@@ -43,7 +43,7 @@ export default function FinalCTA() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-gray-600 mb-6">
+              <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-gray-400 mb-6">
                 Be Part of It
               </p>
 
@@ -54,7 +54,7 @@ export default function FinalCTA() {
                 <span className="text-yellow">Legacy</span>
               </h2>
 
-              <p className="text-gray-500 text-base leading-relaxed max-w-md mb-10">
+              <p className="text-gray-300 text-base leading-relaxed max-w-md mb-10">
                 Connect with the community. Stay updated on training insights,
                 events, and the journey that never stops.
               </p>
@@ -110,13 +110,13 @@ export default function FinalCTA() {
                     <p className="text-white text-sm font-bold tracking-wide group-hover:text-yellow transition-colors">
                       {social.name}
                     </p>
-                    <p className="text-gray-600 text-[11px] font-mono truncate">
+                    <p className="text-gray-400 text-[11px] font-mono truncate">
                       {social.href.replace("https://", "")}
                     </p>
                   </div>
 
                   {/* Arrow */}
-                  <div className="text-gray-700 group-hover:text-yellow transition-colors">
+                  <div className="text-gray-300 group-hover:text-yellow transition-colors">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
                     </svg>
@@ -131,7 +131,7 @@ export default function FinalCTA() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="text-gray-700 text-[11px] font-mono uppercase tracking-[0.3em] mt-8 text-right"
+              className="text-gray-300 text-[11px] font-mono uppercase tracking-[0.3em] mt-8 text-right"
             >
               Discipline · Power · Legacy
             </motion.p>
@@ -141,3 +141,4 @@ export default function FinalCTA() {
     </section>
   )
 }
+

@@ -131,7 +131,7 @@ export default function LayerStack() {
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true, margin: "-80px" }}
                   transition={{ duration: 0.5, delay: 0.2 }}
-                  className="text-gray-500 text-sm leading-relaxed"
+                  className="text-gray-300 text-sm leading-relaxed"
                 >
                   {layer.description}
                 </motion.p>
@@ -224,7 +224,7 @@ export default function LayerStack() {
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true, margin: "-80px" }}
                   transition={{ duration: 0.4 }}
-                  className="text-[10px] font-mono uppercase tracking-[0.35em] text-gray-600 mb-6"
+                  className="text-[10px] font-mono uppercase tracking-[0.35em] text-gray-400 mb-6"
                 >
                   Key Achievements
                 </motion.p>
@@ -253,7 +253,7 @@ export default function LayerStack() {
                           {feature.label}
                         </p>
                         {feature.sublabel && (
-                          <p className="text-gray-600 text-[11px] font-mono mt-0.5 truncate">
+                          <p className="text-gray-400 text-[11px] font-mono mt-0.5 truncate">
                             {feature.sublabel}
                           </p>
                         )}
@@ -281,7 +281,7 @@ export default function LayerStack() {
                       />
                     ))}
                   </div>
-                  <span className="text-[10px] font-mono text-gray-700 uppercase tracking-[0.3em]">
+                  <span className="text-[10px] font-mono text-gray-300 uppercase tracking-[0.3em]">
                     Chapter {layer.number}
                   </span>
                 </motion.div>
@@ -321,7 +321,7 @@ export default function LayerStack() {
             <p className="text-white/80 text-base font-light mb-3">
               {layer.subtitle}
             </p>
-            <p className="text-gray-500 text-sm leading-relaxed mb-6">
+            <p className="text-gray-300 text-sm leading-relaxed mb-6">
               {layer.description}
             </p>
 
@@ -347,7 +347,7 @@ export default function LayerStack() {
                       {feature.label}
                     </p>
                     {feature.sublabel && (
-                      <p className="text-gray-600 text-[11px] font-mono mt-0.5">
+                      <p className="text-gray-400 text-[11px] font-mono mt-0.5">
                         {feature.sublabel}
                       </p>
                     )}
@@ -361,3 +361,4 @@ export default function LayerStack() {
     </section>
   )
 }
+

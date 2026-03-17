@@ -103,7 +103,7 @@ export default function TrainingPrograms() {
 
                   {/* Principles */}
                   <div className="mt-auto pt-6 border-t border-gray-800">
-                    <h4 className="text-xs font-bold text-gray-500 mb-2">PRINCIPLES</h4>
+                    <h4 className="text-xs font-bold text-gray-300 mb-2">PRINCIPLES</h4>
                     <div className="space-y-1">
                       {program.principles.map((principle) => (
                         <p key={principle} className="text-gray-400 text-xs">
@@ -121,3 +121,4 @@ export default function TrainingPrograms() {
     </section>
   )
 }
+

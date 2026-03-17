@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { motion, useReducedMotion } from "framer-motion"
+import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import Image from "next/image"
 
@@ -25,7 +25,6 @@ const FEATURES = [
 ]
 
 export default function TrophyShowcase() {
-  const shouldReduceMotion = useReducedMotion()
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -40,8 +39,6 @@ export default function TrophyShowcase() {
 
   // Check if model exists — we use the fallback image if not
   // The Canvas version activates when a .glb is placed in the trophies folder
-
-  const showCanvas = !isMobile && !shouldReduceMotion
 
   return (
     <section className="relative min-h-screen bg-[#0A0C13] overflow-hidden">
@@ -68,7 +65,7 @@ export default function TrophyShowcase() {
       <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-[#FFFF92]/[0.03] rounded-full blur-[150px]" />
       <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-[#5867B6]/[0.03] rounded-full blur-[120px]" />
 
-      <div className="relative z-10 h-full min-h-screen flex items-center px-4 sm:px-6 lg:px-16 py-24 sm:py-32">
+      <div className="relative z-10 h-full min-h-screen flex items-center px-6 lg:px-16 py-32">
         <div className="max-w-[1400px] w-full mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
@@ -96,7 +93,7 @@ export default function TrophyShowcase() {
                 <div className="relative inline-block mb-4">
                   <div className="absolute -left-3 top-0 h-full w-[2px] bg-gradient-to-b from-[#FFFF92] via-[#5867B6] to-transparent" />
                   <div className="absolute -left-3 top-0 w-4 h-[2px] bg-[#FFFF92]" />
-                  <h2 className="text-5xl sm:text-6xl lg:text-8xl font-black leading-none pl-4">
+                  <h2 className="text-6xl lg:text-8xl font-black leading-none pl-4">
                     <span className="bg-gradient-to-r from-[#FFFF92] via-[#FFD700] to-[#FFFF92] bg-clip-text text-transparent">
                       2002
                     </span>
@@ -130,7 +127,7 @@ export default function TrophyShowcase() {
                 <p className="text-[10px] font-mono text-gray-400 uppercase tracking-[0.3em]">
                   Achievements
                 </p>
-                <div className="flex items-center gap-[1px] flex-wrap">
+                <div className="flex items-center gap-[1px]">
                   <div className="px-4 py-2.5 bg-gray-800/40 border border-gray-700/30 rounded-l-lg">
                     <span className="text-xs font-mono text-gray-400">🏆 NOC Winner</span>
                   </div>
@@ -150,19 +147,19 @@ export default function TrophyShowcase() {
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <motion.div
                   className="absolute w-[350px] h-[350px] rounded-full border border-[#FFFF92]/10"
-                  animate={shouldReduceMotion ? undefined : { rotate: 360 }}
-                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 20, repeat: Infinity, ease: "linear" }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 />
                 <motion.div
                   className="absolute w-[420px] h-[420px] rounded-full border border-[#5867B6]/10"
-                  animate={shouldReduceMotion ? undefined : { rotate: -360 }}
-                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 30, repeat: Infinity, ease: "linear" }}
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
                 />
                 {/* Outer ring passing through bottom of stand */}
                 <motion.div
                   className="absolute w-[550px] h-[550px] rounded-full border border-[#FFFF92]/[0.07] translate-y-[60px]"
-                  animate={shouldReduceMotion ? undefined : { rotate: 360 }}
-                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 40, repeat: Infinity, ease: "linear" }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
                 />
                 <div
                   className="absolute w-[300px] h-[300px] rounded-full"
@@ -171,9 +168,9 @@ export default function TrophyShowcase() {
               </div>
               
               {/* 3D Canvas for desktop, placeholder for mobile */}
-               {showCanvas ? (
-                 <TrophyCanvas />
-               ) : (
+              {!isMobile ? (
+                <TrophyCanvas />
+              ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -235,7 +232,7 @@ export default function TrophyShowcase() {
               >
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-[1px] bg-gray-700" />
-                  <span className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em]">
+                  <span className="text-[10px] font-mono text-gray-300 uppercase tracking-[0.2em]">
                     Best Year
                   </span>
                 </div>
@@ -248,3 +245,5 @@ export default function TrophyShowcase() {
     </section>
   )
 }
+
+

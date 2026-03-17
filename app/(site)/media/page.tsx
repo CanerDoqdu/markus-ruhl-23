@@ -40,10 +40,10 @@ export default function MediaPage() {
                     {/* Placeholder */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <span className="text-gray-600 text-sm block mb-2">
+                        <span className="text-gray-400 text-sm block mb-2">
                           {item.type === "video" ? "📹" : "📷"}
                         </span>
-                        <span className="text-gray-700 text-xs">
+                        <span className="text-gray-300 text-xs">
                           Add {item.type} {item.id}
                         </span>
                       </div>
@@ -56,7 +56,7 @@ export default function MediaPage() {
             </div>
 
             <Reveal delay={0.8} className="mt-16 text-center">
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-300 text-sm">
                 Media placeholders ready for your content. Replace with actual photos and videos.
               </p>
             </Reveal>
@@ -66,3 +66,4 @@ export default function MediaPage() {
     </>
   )
 }
+
