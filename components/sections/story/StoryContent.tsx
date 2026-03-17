@@ -6,7 +6,7 @@ import StaggerContainer, { StaggerItem } from "@/components/motion/StaggerContai
 
 export default function StoryContent() {
   return (
-    <section className="relative py-32 px-6 bg-main">
+    <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-main">
       <div className="max-w-4xl mx-auto">
         {/* Main Story */}
         <Reveal>
@@ -14,7 +14,7 @@ export default function StoryContent() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-8">
               The Beginning
             </h2>
-            <div className="space-y-6 text-gray-300 text-lg leading-relaxed">
+            <div className="space-y-6 text-gray-300 text-base sm:text-lg leading-relaxed">
               <p>
                 Markus Rühl (born 22 February 1972, in Darmstadt, Germany) is a
                 retired IFBB professional bodybuilder who became one of the most
@@ -54,27 +54,27 @@ export default function StoryContent() {
                 Peak Stats (Competition)
               </h3>
               <div className="space-y-4 text-gray-300">
-                <div className="flex justify-between items-center pb-2 border-b border-gray-800">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-800 gap-4">
                   <span>Height</span>
                   <span className="font-bold text-white">1.78 m (5'10")</span>
                 </div>
-                <div className="flex justify-between items-center pb-2 border-b border-gray-800">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-800 gap-4">
                   <span>Weight (Off-Season)</span>
                   <span className="font-bold text-white">145 kg (320 lbs)</span>
                 </div>
-                <div className="flex justify-between items-center pb-2 border-b border-gray-800">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-800 gap-4">
                   <span>Weight (Contest)</span>
                   <span className="font-bold text-white">130 kg (287 lbs)</span>
                 </div>
-                <div className="flex justify-between items-center pb-2 border-b border-gray-800">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-800 gap-4">
                   <span>Arm Size</span>
                   <span className="font-bold text-white">61 cm (24")</span>
                 </div>
-                <div className="flex justify-between items-center pb-2 border-b border-gray-800">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-800 gap-4">
                   <span>Leg Size</span>
                   <span className="font-bold text-white">85-88 cm (33-35")</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center gap-4">
                   <span>Chest Size</span>
                   <span className="font-bold text-white">150 cm (59")</span>
                 </div>

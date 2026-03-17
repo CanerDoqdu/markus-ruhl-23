@@ -13,20 +13,20 @@ export default function TrainingPage() {
   return (
     <>
       <ScrollProgress />
-      <main>
+      <main id="main-content">
         {/* Hero Section */}
-        <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-main via-blue/10 to-main px-6 pt-32">
+        <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-main via-blue/10 to-main px-4 sm:px-6 pt-28 sm:pt-32">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(88,103,182,0.1),transparent_70%)]" />
           <Reveal className="relative z-10 text-center max-w-4xl mx-auto">
-            <h1 className="text-6xl md:text-8xl font-black mb-6 leading-none">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-none">
               <span className="text-white">TRAINING</span>
               <br />
               <span className="text-yellow glow-text-yellow">PHILOSOPHY</span>
             </h1>
-            <p className="text-gray-400 text-xl md:text-2xl mb-8">
+            <p className="text-gray-400 text-base sm:text-lg md:text-2xl mb-8">
               Decades of experience distilled into proven methodologies.
             </p>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
               Success in bodybuilding isn't about magic formulas or secret techniques.
               It's about consistency, discipline, and unwavering commitment to excellence.
             </p>
@@ -34,7 +34,7 @@ export default function TrainingPage() {
         </section>
 
         {/* Core Principles */}
-        <section className="relative py-32 px-6 bg-main">
+        <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-main">
           <div className="max-w-4xl mx-auto">
             <Reveal>
               <Heading className="text-center mb-16">
@@ -65,7 +65,7 @@ export default function TrainingPage() {
         <TrainingPrograms />
 
         {/* Quote Section */}
-        <section className="relative py-32 px-6 bg-gradient-to-b from-main to-gray-900">
+        <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-gradient-to-b from-main to-gray-900">
           <Reveal>
             <div className="max-w-3xl mx-auto text-center">
               <blockquote className="text-3xl md:text-4xl font-bold text-white leading-relaxed mb-6">

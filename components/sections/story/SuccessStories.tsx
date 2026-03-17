@@ -50,7 +50,7 @@ const TESTIMONIALS = [
 
 export default function SuccessStories() {
   return (
-    <section className="relative py-32 px-6 bg-gradient-to-b from-main via-blue/5 to-main">
+    <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-gradient-to-b from-main via-blue/5 to-main">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,146,0.05),transparent_60%)]" />
       
       <div className="relative max-w-7xl mx-auto">
@@ -59,7 +59,7 @@ export default function SuccessStories() {
           <span className="text-yellow ml-4">STORIES</span>
         </Heading>
 
-        <p className="text-center text-gray-400 text-xl max-w-3xl mx-auto mb-16">
+        <p className="text-center text-gray-400 text-base sm:text-xl max-w-3xl mx-auto mb-16">
           Real transformations from people who embraced the discipline and commitment required for greatness.
         </p>
 

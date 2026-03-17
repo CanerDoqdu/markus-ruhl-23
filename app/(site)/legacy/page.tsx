@@ -56,23 +56,23 @@ export default function LegacyPage() {
   return (
     <>
       <ScrollProgress />
-      <main>
+      <main id="main-content">
         {/* Hero */}
-        <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-main via-purple/10 to-main px-6 pt-32">
+        <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-main via-purple/10 to-main px-4 sm:px-6 pt-28 sm:pt-32">
           <Reveal className="text-center">
-            <h1 className="text-6xl md:text-8xl font-black mb-6 leading-none">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-none">
               <span className="text-white">THE</span>
               <br />
               <span className="text-yellow glow-text-yellow">LEGACY</span>
             </h1>
-            <p className="text-gray-400 text-xl max-w-2xl mx-auto">
+            <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto">
               More than competitions. More than titles. A lasting impact on the sport and those who follow.
             </p>
           </Reveal>
         </section>
 
         {/* Achievements */}
-        <section className="relative py-32 px-6 bg-main">
+        <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-main">
           <div className="max-w-6xl mx-auto">
             <Reveal>
               <Heading className="text-center mb-20">
@@ -100,7 +100,7 @@ export default function LegacyPage() {
         </section>
 
         {/* Quotes */}
-        <section className="relative py-32 px-6 bg-gradient-to-b from-main via-blue/5 to-main">
+        <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-gradient-to-b from-main via-blue/5 to-main">
           <div className="max-w-4xl mx-auto">
             <Reveal>
               <Heading className="text-center mb-20">
@@ -124,7 +124,7 @@ export default function LegacyPage() {
         </section>
 
         {/* Partners */}
-        <section className="relative py-32 px-6 bg-main overflow-hidden">
+        <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-main overflow-hidden">
           {/* Animated gradient orb backgrounds */}
           <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-yellow/[0.03] rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute top-1/2 right-1/4 translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue/[0.04] rounded-full blur-[100px] pointer-events-none" />
@@ -192,7 +192,7 @@ export default function LegacyPage() {
 
             {/* Stats bar */}
             <Reveal delay={0.3}>
-              <div className="mt-16 flex items-center justify-center gap-12 md:gap-20">
+              <div className="mt-16 flex items-center justify-center gap-8 md:gap-20 flex-wrap">
                 {[
                   { value: "15+", label: "Years" },
                   { value: "10+", label: "Partners" },

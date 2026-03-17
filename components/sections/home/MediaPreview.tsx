@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import Image from "next/image"
 
 interface GalleryCard {
@@ -77,8 +77,9 @@ const GALLERY_ITEMS: GalleryCard[] = [
 ]
 
 export default function MediaPreview() {
+  const shouldReduceMotion = useReducedMotion()
   return (
-    <section className="relative py-32 px-6 bg-[#0A0C13] overflow-hidden">
+    <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-[#0A0C13] overflow-hidden">
       {/* Background grid */}
       <div
         className="absolute inset-0 opacity-[0.03]"
@@ -94,14 +95,14 @@ export default function MediaPreview() {
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6 }}
           className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-16 gap-6"
         >
           <div>
             <p className="text-xs font-mono text-[#FFFF92]/60 uppercase tracking-[0.3em] mb-4">
               The Archive
             </p>
-            <h2 className="text-5xl lg:text-7xl font-black leading-[0.95]">
+            <h2 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[0.95]">
               <span className="block bg-gradient-to-r from-[#FFFF92] via-[#FFD700] to-[#FFFF92] bg-clip-text text-transparent">
                 Gallery
               </span>
@@ -121,7 +122,7 @@ export default function MediaPreview() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, delay: index * 0.05 }}
               className="group relative bg-[#0A0C13] hover:bg-[#0e1017] transition-colors duration-300 flex flex-col"
             >
               {/* Image / Icon area */}
@@ -187,7 +188,7 @@ export default function MediaPreview() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.3 }}
           className="flex justify-end mt-4"
         >
           <span className="text-[10px] font-mono text-gray-600 uppercase tracking-[0.3em]">

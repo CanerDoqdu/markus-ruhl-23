@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, FormEvent } from "react"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import Reveal from "@/components/motion/Reveal"
 
 export default function ContactForm() {
+  const shouldReduceMotion = useReducedMotion()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -45,7 +46,7 @@ export default function ContactForm() {
   }
 
   return (
-    <section className="relative py-32 px-6 bg-gradient-to-b from-main via-blue/5 to-main">
+    <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-gradient-to-b from-main via-blue/5 to-main">
       <div className="max-w-4xl mx-auto">
         <Reveal>
           <h2 className="text-4xl font-bold text-center text-white mb-12">
@@ -107,8 +108,8 @@ export default function ContactForm() {
             <motion.button
               type="submit"
               disabled={status === "loading"}
-              whileHover={{ scale: status === "loading" ? 1 : 1.02 }}
-              whileTap={{ scale: status === "loading" ? 1 : 0.98 }}
+              whileHover={shouldReduceMotion ? undefined : { scale: status === "loading" ? 1 : 1.02 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: status === "loading" ? 1 : 0.98 }}
               className="w-full py-4 bg-gradient-to-r from-yellow to-blue text-main font-bold rounded-lg hover:shadow-glow-yellow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {status === "loading" ? "Sending..." : "Send Message"}

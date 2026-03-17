@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
@@ -15,6 +15,12 @@ export default function Header() {
   const isDesktop = useMediaQuery("(min-width: 1024px)")
   const shouldReduceMotion = useReducedMotion()
 
+  useEffect(() => {
+    if (isDesktop && isMenuOpen) {
+      setIsMenuOpen(false)
+    }
+  }, [isDesktop, isMenuOpen])
+
   const isActive = (href: string) => {
     if (href === "/#home") return pathname === "/"
     return pathname.startsWith(href.replace("/#", "/"))
@@ -23,10 +29,10 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       <nav className="bg-gradient-to-b from-main via-main/95 to-transparent backdrop-blur-sm border-b border-blue/10">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="text-2xl font-bold font-raleway tracking-tighter">
+              <Link href="/" className="text-xl sm:text-2xl font-bold font-raleway tracking-tighter">
               <span className="text-yellow">MARKUS</span>
               <span className="text-white ml-2">RÜHL</span>
             </Link>
@@ -79,11 +85,11 @@ export default function Header() {
           <motion.nav
             id="mobile-navigation"
             aria-label="Mobile navigation"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "100vh" }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
             transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.3 }}
-            className="fixed inset-0 top-[72px] bg-main/98 backdrop-blur-lg z-40"
+            className="fixed inset-x-0 top-[72px] bottom-0 bg-main/98 backdrop-blur-lg z-40 overflow-y-auto"
           >
             <div className="flex flex-col items-center justify-center h-full gap-8 pb-20">
               {NAV_LINKS.map((link, index) => (

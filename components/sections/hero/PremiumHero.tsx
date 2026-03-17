@@ -325,7 +325,7 @@ export default function PremiumHero() {
       )}
 
       {/* Content overlay */}
-      <div className="relative z-10 h-full flex items-end pb-24 lg:pb-32 px-6 lg:px-12 pt-24">
+      <div className="relative z-10 h-full flex items-end pb-20 lg:pb-32 px-4 sm:px-6 lg:px-12 pt-24">
         <div className="max-w-[1400px] mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
             
@@ -346,7 +346,7 @@ export default function PremiumHero() {
               </motion.p>
 
               <div>
-                <h1 className="text-6xl lg:text-8xl font-black leading-[0.9]">
+                 <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black leading-[0.9]">
                   <span className="block bg-gradient-to-r from-[#FFFF92] via-[#FFD700] to-[#FFFF92] bg-clip-text text-transparent">
                     Mass
                   </span>
@@ -356,7 +356,7 @@ export default function PremiumHero() {
                 </h1>
               </div>
 
-              <p className="text-gray-500 text-sm max-w-sm leading-relaxed font-light">
+              <p className="text-gray-500 text-sm sm:text-base max-w-sm leading-relaxed font-light">
                 One of the biggest bodybuilders who ever lived.
                 IFBB Professional, dominating the stage since 1990.
               </p>

@@ -32,7 +32,7 @@ const PROGRAMS = [
 
 export default function TrainingPreview() {
   return (
-    <section className="relative py-32 px-6 bg-gradient-to-b from-main via-gray-900 to-main">
+    <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-gradient-to-b from-main via-gray-900 to-main">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(88,103,182,0.08),transparent_60%)]" />
       
       <div className="relative max-w-7xl mx-auto">
@@ -41,7 +41,7 @@ export default function TrainingPreview() {
           <span className="text-yellow ml-4">PHILOSOPHY</span>
         </Heading>
 
-        <p className="text-center text-gray-400 text-xl max-w-3xl mx-auto mb-16">
+        <p className="text-center text-gray-400 text-base sm:text-xl max-w-3xl mx-auto mb-16">
           Proven methods from decades of experience. No gimmicks, just results.
         </p>
 
