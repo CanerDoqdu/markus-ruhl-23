@@ -118,7 +118,7 @@ Origin: <NEXT_PUBLIC_SITE_URL>
 {
   "name": "string",     // 2–100 characters, required
   "email": "string",    // valid RFC-5322 email, required
-  "message": "string"   // 10–5000 characters, required
+  "message": "string"   // 10–2000 characters, required
 }
 ```
 
@@ -128,7 +128,7 @@ Origin: <NEXT_PUBLIC_SITE_URL>
 |---|---|---|---|
 | `name` | 2 chars | 100 chars | Any string (control characters stripped) |
 | `email` | — | — | Valid email address |
-| `message` | 10 chars | 5000 chars | Any string (control characters stripped) |
+| `message` | 10 chars | 2000 chars | Any string (control characters stripped) |
 
 Input is sanitized (control characters removed) **before** schema validation
 to prevent email-header injection attacks (CRLF sequences).

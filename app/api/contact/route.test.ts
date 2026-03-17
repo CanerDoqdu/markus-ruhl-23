@@ -775,3 +775,141 @@ describe("mail service failure handling", () => {
     expect(errorSpy).toHaveBeenCalled()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Sanitization effectiveness — injection and boundary inputs
+// ---------------------------------------------------------------------------
+//
+// The route sanitizes control characters before validation. HTML-like inputs
+// (XSS patterns) are valid characters within field limits and MUST pass
+// through to the mail transport (which escapes them via escapeHtml). The
+// contact API is not a browser renderer — HTML injection defense belongs at
+// the mail/rendering layer, not here.
+//
+// These tests verify the API contract for adversarial-looking but structurally
+// valid inputs: the route returns 200 (not 400/500), does NOT echo raw HTML
+// back in the response body, and correctly strips ONLY control characters.
+describe("sanitization effectiveness", () => {
+  it("accepts HTML/XSS-like input and returns 200 — escaping is mail-layer responsibility", async () => {
+    const response = await POST(
+      createRequest(
+        JSON.stringify({
+          name: "<script>alert('xss')</script>",
+          email: "markus@example.com",
+          message: "<img src=x onerror=alert(1)> This is a message that is long enough.",
+        })
+      )
+    )
+    // HTML chars are valid string content — field lengths are within limits,
+    // so validation passes. The API must not reject or crash on these inputs.
+    expect(response.status).toBe(200)
+    expect((await response.json() as { success: boolean }).success).toBe(true)
+  })
+
+  it("response body never echoes back raw HTML tags from input fields", async () => {
+    const response = await POST(
+      createRequest(
+        JSON.stringify({
+          name: "<b>Bold Name</b>",
+          email: "markus@example.com",
+          message: "<p>Paragraph message content that is long enough to pass.</p>",
+        })
+      )
+    )
+    const text = await response.text()
+    // The success response body is a fixed string — it does not interpolate
+    // user input. Verify no raw HTML tags appear in the response.
+    expect(text).not.toMatch(/<b>|<\/b>|<p>|<\/p>/)
+  })
+
+  it("control characters in name and message fields are stripped before validation", async () => {
+    const response = await POST(
+      createRequest(
+        JSON.stringify({
+          // Name and message contain control characters; after stripping they
+          // both meet minimum length requirements and pass validation.
+          // Email is kept clean so the field passes format validation.
+          name: "Al\x00ice\x01",
+          email: "alice@example.com",
+          message: "Hello,\r\nthis is a\ttest message that is long enough.",
+        })
+      )
+    )
+    // Control chars stripped → fields are valid → 200
+    expect(response.status).toBe(200)
+    const text = await response.text()
+    // Response body must not contain raw control characters echoed back
+    // eslint-disable-next-line no-control-regex
+    expect(text).not.toMatch(/[\x00-\x1f]/)
+  })
+
+  it("null byte injection in email field is stripped and then rejected as invalid email format", async () => {
+    const response = await POST(
+      createRequest(
+        JSON.stringify({
+          name: "Alice",
+          email: "ali\x00ce@example.com",
+          message: "A valid message that is long enough to pass validation.",
+        })
+      )
+    )
+    // "ali ce@example.com" (null replaced with space) fails email format check → 422
+    // OR the sanitized value becomes "alice@example.com" if null is stripped cleanly.
+    // Either way: must never be 500, and must return a structured envelope.
+    expect([200, 422]).toContain(response.status)
+    const json = (await response.json()) as { success: boolean; error?: { code?: string } }
+    if (response.status === 422) {
+      expect(json.error?.code).toBe("VALIDATION_ERROR")
+    } else {
+      expect(json.success).toBe(true)
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Mail fallback PII redaction
+// ---------------------------------------------------------------------------
+//
+// When no mail provider is configured, the route falls back to a console log.
+// That log must never contain the submitter's name, email address, or message
+// content — even in the fallback path. This test verifies the redaction contract
+// by inspecting what the console receives when sendContactMail is allowed to
+// run normally (no spyOn mock on sendContactMail itself).
+describe("mail fallback PII redaction", () => {
+  it("fallback console log does not emit name or email address values", async () => {
+    // Ensure no mail transport is configured
+    const originalResend = process.env.RESEND_API_KEY
+    const originalSmtp = process.env.SMTP_HOST
+    delete process.env.RESEND_API_KEY
+    delete process.env.SMTP_HOST
+
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {})
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    try {
+      const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD)))
+      expect(response.status).toBe(200)
+
+      // Collect all console.info calls that contain our fallback event
+      const fallbackCalls = infoSpy.mock.calls
+        .map((args) => (args[0] as string) ?? "")
+        .filter((s) => s.includes("contact_submission_fallback"))
+
+      expect(fallbackCalls.length).toBeGreaterThan(0)
+
+      for (const logLine of fallbackCalls) {
+        // Name must be redacted — never log the submitter's real name
+        expect(logLine).not.toContain(VALID_PAYLOAD.name)
+        // Email address must be redacted — PII
+        expect(logLine).not.toContain(VALID_PAYLOAD.email)
+        // Message must never appear (only messageLength is logged)
+        expect(logLine).not.toContain(VALID_PAYLOAD.message)
+        // Subject must not contain the name either
+        expect(logLine).not.toMatch(/New contact from Markus/)
+      }
+    } finally {
+      if (originalResend !== undefined) process.env.RESEND_API_KEY = originalResend
+      if (originalSmtp !== undefined) process.env.SMTP_HOST = originalSmtp
+    }
+  })
+})

@@ -118,6 +118,9 @@ export async function sendContactMail(payload: ContactMailPayload): Promise<void
   }
 
   // ─── Fallback: structured console log (dev / preview) ──────────────────────
+  // PII POLICY: name, email, and message are NEVER logged — they are redacted
+  // here so the fallback path cannot accidentally leak user data to log
+  // aggregators even when no mail transport is configured.
   console.warn(
     "[mail] No mail provider configured (set RESEND_API_KEY or SMTP_HOST). " +
     "Logging contact submission to console."
@@ -126,9 +129,9 @@ export async function sendContactMail(payload: ContactMailPayload): Promise<void
     event: "contact_submission_fallback",
     to,
     from,
-    subject,
-    replyTo: email,
-    name,
+    subject: "New contact from [REDACTED]",
+    replyTo: "[REDACTED]",
+    name: "[REDACTED]",
     messageLength: message.length,
     timestamp: new Date().toISOString(),
   }))
