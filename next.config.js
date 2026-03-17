@@ -12,14 +12,6 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
-  webpack(config) {
-    // Allow importing .glsl / .vert / .frag shader files as raw strings
-    config.module.rules.push({
-      test: /\.(glsl|vert|frag)$/,
-      type: 'asset/source',
-    })
-    return config
-  },
 }
 
 module.exports = nextConfig
