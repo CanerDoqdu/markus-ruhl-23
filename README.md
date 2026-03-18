@@ -96,17 +96,22 @@ cp .env.example .env.local
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NEXT_PUBLIC_SITE_URL` | Yes | Production URL (e.g., `https://markusruhl.com`) |
-| `RESEND_API_KEY` | No* | Resend API key for email delivery |
-| `SMTP_HOST` | No* | SMTP server hostname (fallback transport) |
-| `SMTP_PORT` | No | SMTP port (default: 587) |
-| `SMTP_USER` | No | SMTP authentication username |
-| `SMTP_PASS` | No | SMTP authentication password |
-| `CONTACT_EMAIL` | Yes | Recipient email for contact form submissions |
-| `CSRF_SECRET` | Yes | Secret for CSRF token generation (min 32 chars) |
-| `RATE_LIMIT_MAX` | No | Max contact submissions per IP per window (default: 5) |
+| `NEXT_PUBLIC_SITE_URL` | **Required** | CORS/CSRF origin guard — must match the deployed domain exactly (no trailing slash). e.g. `https://markusruhl.com` |
+| `CONTACT_MAIL_TO` | **Required** | Recipient address for incoming contact-form submissions. |
+| `CONTACT_MAIL_FROM` | **Required** | Sender address on outbound emails (must be verified by your mail provider). |
+| `RESEND_API_KEY` | Conditional | Resend API key. Required if using Resend as the mail transport. |
+| `SENDGRID_API_KEY` | Conditional | SendGrid API key (placeholder for future integration). |
+| `SMTP_HOST` | Conditional | SMTP server hostname. Required if using Nodemailer/SMTP transport. |
+| `SMTP_PORT` | Optional | SMTP port (default: `587`). Use `465` for TLS-wrapped connections. |
+| `SMTP_USER` | Optional | SMTP authentication username. |
+| `SMTP_PASS` | Conditional | SMTP authentication password. |
+| `CONTACT_MAIL_TIMEOUT_MS` | Optional | Mail dispatch timeout in ms (default: `10000`). |
+| `CONTACT_RATE_LIMIT_MAX` | Optional | Max contact requests per IP per window (default: `5`). |
+| `CONTACT_RATE_LIMIT_WINDOW_MS` | Optional | Rate-limit window duration in ms (default: `60000`). |
+| `REDIS_URL` | Optional | Full Redis URL for distributed rate limiting across multiple instances. |
+| `REDIS_HOST` | Optional | Redis hostname (alternative to `REDIS_URL`). |
 
-\* At least one mail transport (`RESEND_API_KEY` or `SMTP_HOST`) should be configured in production. Without either, emails are logged to the console.
+At least one mail transport (`RESEND_API_KEY` or `SMTP_HOST`) must be configured in production. Without either, submissions are logged to stdout only — no email is sent. See [`docs/regression-checklist.md §7`](./docs/regression-checklist.md) for failure-mode details per variable.
 
 ### Development
 
@@ -161,7 +166,7 @@ Submit a contact form message. Protected by CSRF validation, rate limiting, and 
 {
   "name": "string (2-100 chars, required)",
   "email": "string (valid email, required)",
-  "message": "string (10-5000 chars, required)"
+  "message": "string (10-2000 chars, required)"
 }
 ```
 
@@ -241,4 +246,11 @@ pm2 start npm --name "markus-ruhl" -- start
 - [ ] Sitemap is accessible at `/sitemap.xml`
 - [ ] Open Graph image loads correctly when URL is shared
 - [ ] Lighthouse score targets: Performance ≥90, Accessibility 100, Best Practices 100, SEO 100
+- [ ] Health endpoint returns `200` with `status: "ok"` → `curl https://<domain>/api/health | jq .`
+
+> **Rollback procedure:** If a deployment introduces a regression, follow the
+> step-by-step rollback runbook in
+> [`docs/regression-checklist.md §8`](./docs/regression-checklist.md).
+> It covers safe revert steps, health verification, and degraded-mode guidance
+> (Redis unavailable is **not** a rollback trigger).
 
