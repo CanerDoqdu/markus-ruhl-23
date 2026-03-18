@@ -42,6 +42,25 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # Gate: verify required build-time environment variables are configured before
+      # proceeding with the build. Runs on main branch pushes only (where the build
+      # output is what gets deployed). PRs from contributors may not have prod vars set.
+      # Configure NEXT_PUBLIC_SITE_URL in: Settings → Secrets and variables → Actions → Variables.
+      - name: Verify required environment variables
+        if: github.ref == 'refs/heads/main'
+        env:
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+        run: |
+          missing=()
+          [[ -z "${NEXT_PUBLIC_SITE_URL}" ]] && missing+=("NEXT_PUBLIC_SITE_URL")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::Missing required build-time environment variables: ${missing[*]}"
+            echo "::error::Set these in GitHub Actions Variables (Settings → Secrets and variables → Actions → Variables)."
+            echo "::error::See docs/regression-checklist.md §7 for the full variable reference."
+            exit 1
+          fi
+          echo "All required environment variables are present."
+
       - name: Install dependencies
         # npm ci is required (not npm install) for deterministic, lockfile-exact installs.
         run: npm ci
