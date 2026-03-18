@@ -24,7 +24,7 @@ Use this checklist before release to catch UX/performance regressions quickly.
 - [ ] Validation path: invalid/missing fields show user-facing validation errors.
 - [ ] Server error path: mail/provider failure returns safe generic error (no internals leaked).
 - [ ] Keyboard-only form completion works from first field to submit and feedback.
-- [ ] API response contracts hold for `200`, `415`, `422`, `429`, `500`.
+- [ ] API response contracts hold for `200`, `400`, `403`, `415`, `422`, `429`, `500`.
 
 ## 4) Animation & Motion Behavior
 
@@ -94,9 +94,30 @@ Roll back immediately if any of the following are observed post-deploy:
 - CI-blocked PR was merged by mistake (protected branch bypass)
 - New deployment introduced a visual or functional regression confirmed by Lighthouse
 
+### Known-good release tags
+
+Release tags mark validated, deployable states. Use them as stable rollback anchors:
+
+| Tag | Commit | State |
+|---|---|---|
+| `known-good/v1-wave2-ops` | `dcf3b30` | Post wave-2 ops hardening — CI green, health endpoint, structured logging, runbooks |
+
+**Tag convention:** `known-good/<descriptor>` — created after each wave's CI passes and ops review is complete.
+
+To list available tags:
+```sh
+git tag --list 'known-good/*' --sort=-creatordate
+```
+
 ### Rollback steps
 
-1. **Identify the last known-good commit SHA**
+1. **Identify the last known-good tag** (preferred over raw SHA hunting)
+   ```sh
+   git tag --list 'known-good/*' --sort=-creatordate | head -5
+   # Or find the SHA of the tag:
+   git rev-parse known-good/v1-wave2-ops
+   ```
+   If no tag exists, fall back to the recent commit log:
    ```sh
    git log --oneline -10 origin/main
    ```
@@ -115,11 +136,18 @@ Roll back immediately if any of the following are observed post-deploy:
    curl -s https://<your-domain>/api/health | jq .
    # Expected: {"status":"ok","dependencies":{"redis":"ok"|"unavailable"},...}
    ```
+   Replace `<your-domain>` with the deployed hostname (e.g., `markusruhl.com`).
 
 5. **Confirm contact form** end-to-end with a test submission in staging.
 
 6. **Check structured logs** for `mail_failure` or `rate_limit_redis_error` events
    indicating a dependency degradation that the rollback did not resolve.
+
+7. **Tag the new stable state** after a verified clean deployment:
+   ```sh
+   git tag known-good/<descriptor> <sha>
+   git push origin known-good/<descriptor>
+   ```
 
 ### Degraded-mode operation (Redis unavailable)
 
