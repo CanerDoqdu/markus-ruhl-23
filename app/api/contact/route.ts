@@ -171,9 +171,19 @@ export async function POST(request: NextRequest) {
   const start = Date.now()
 
   // Extract IP early so it is available for structured logging on every path.
+  //
+  // Security: X-Forwarded-For leftmost value is client-controlled and MUST NOT
+  // be used for rate limiting — an attacker can rotate spoofed IPs to bypass
+  // per-IP quotas.  Correct extraction order:
+  //   1. x-real-ip — set by the trusted edge (nginx/Vercel), not client-writable.
+  //   2. Last value in x-forwarded-for — appended by the nearest trusted proxy;
+  //      each hop prepends its observed client IP so the rightmost entry is
+  //      the one the trusted proxy inserted, not the one the client injected.
+  //   3. "unknown" — fail-safe; rate limiter still applies via its own fallback.
+  const xForwardedFor = request.headers.get("x-forwarded-for")
   const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     request.headers.get("x-real-ip") ??
+    (xForwardedFor ? xForwardedFor.split(",").at(-1)!.trim() : null) ??
     "unknown"
 
   logEvent({ event: "contact_request", route: "/api/contact", method: "POST", status: 0, durationMs: 0, ip })

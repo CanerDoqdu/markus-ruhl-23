@@ -103,6 +103,18 @@ redis.call('PEXPIRE', KEYS[1], window)
 return 0
 `
 
+/**
+ * Strips connection-string credentials from error messages before logging.
+ * Redis error messages can embed the full URL including passwords, e.g.:
+ *   "connect ECONNREFUSED redis://:mypassword@redis.example.com:6379"
+ * Redact anything matching <scheme>://<userinfo>@<host> to prevent accidental
+ * credential exposure in log aggregators.
+ */
+function safeErrorMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err)
+  return raw.replace(/\w+:\/\/[^@\s]*@/g, "[REDACTED_URL]")
+}
+
 type RedisLikeClient = {
   connect: () => Promise<unknown>
   eval: (script: string, numkeys: number, ...args: Array<string | number>) => Promise<unknown>
@@ -134,7 +146,7 @@ async function getRedisClient(): Promise<RedisLikeClient | null> {
 
     client.on("error", (err: Error) => {
       // FAIL-OPEN: mark Redis as unavailable so subsequent calls use in-memory.
-      console.error("[rate-limit] Redis error — falling back to in-memory:", err.message)
+      console.error("[rate-limit] Redis error — falling back to in-memory:", safeErrorMessage(err))
       redisAvailable = false
     })
     client.on("ready", () => {
@@ -146,7 +158,7 @@ async function getRedisClient(): Promise<RedisLikeClient | null> {
     return client
   } catch (err) {
     // FAIL-OPEN: connection failure at startup — proceed with in-memory limiter.
-    console.error("[rate-limit] Redis connect failed — using in-memory fallback:", (err as Error).message)
+    console.error("[rate-limit] Redis connect failed — using in-memory fallback:", safeErrorMessage(err))
     return null
   }
 }
@@ -168,7 +180,7 @@ async function isRateLimitedRedis(ip: string): Promise<boolean> {
     return result === 1
   } catch (err) {
     // Intentional: rate limiter fails open on Redis unavailability to preserve service availability.
-    console.log(JSON.stringify({ event: "rate_limit_redis_error", error: (err as Error).message, timestamp: new Date().toISOString() }))
+    console.log(JSON.stringify({ event: "rate_limit_redis_error", error: safeErrorMessage(err), timestamp: new Date().toISOString() }))
     return isRateLimitedMemory(ip)
   }
 }
