@@ -45,6 +45,8 @@ const nextConfig = {
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'none'",
+            // Force all mixed-content loads to HTTPS. Safe to add unconditionally.
+            "upgrade-insecure-requests",
             ].join('; '),
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },

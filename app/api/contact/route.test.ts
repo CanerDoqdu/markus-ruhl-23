@@ -183,11 +183,19 @@ describe("POST /api/contact", () => {
     const response = await POST(
       createRequest(JSON.stringify(VALID_PAYLOAD), { contentType: "text/plain" })
     )
-    const json = (await response.json()) as { success: boolean; error?: { code?: string } }
+    const json = (await response.json()) as {
+      success: boolean
+      error?: { code?: string; message?: string }
+    }
 
     expect(response.status).toBe(415)
-    expect(json.success).toBe(false)
-    expect(json.error?.code).toBe("BAD_REQUEST")
+    expect(json).toEqual({
+      success: false,
+      error: {
+        code: "BAD_REQUEST",
+        message: "Unsupported Media Type",
+      },
+    })
   })
 
   // Security guard added in PR #53: reject cross-origin requests when
@@ -199,10 +207,19 @@ describe("POST /api/contact", () => {
       const response = await POST(
         createRequest(JSON.stringify(VALID_PAYLOAD), { origin: "https://evil.com" })
       )
-      const json = (await response.json()) as { success: boolean }
+      const json = (await response.json()) as {
+        success: boolean
+        error?: { code?: string; message?: string }
+      }
 
       expect(response.status).toBe(403)
-      expect(json.success).toBe(false)
+      expect(json).toEqual({
+        success: false,
+        error: {
+          code: "BAD_REQUEST",
+          message: "Forbidden",
+        },
+      })
     } finally {
       if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL
       else process.env.NEXT_PUBLIC_SITE_URL = original
@@ -222,6 +239,73 @@ describe("POST /api/contact", () => {
 
     expect(statuses).toContain(429)
   })
+
+  ;(HAS_RATE_LIMIT ? it : it.skip)("returns a stable 429 error envelope when rate limit is exceeded", async () => {
+    const fixedIp = `test-rate-limit-schema-${randomUUID()}`
+
+    for (let i = 0; i < 40; i += 1) {
+      const response = await POST(createRequest(JSON.stringify(VALID_PAYLOAD), { ip: fixedIp }))
+      if (response.status === 429) {
+        const json = (await response.json()) as {
+          success: boolean
+          error?: { code?: string; message?: string }
+        }
+        expect(json).toEqual({
+          success: false,
+          error: {
+            code: "BAD_REQUEST",
+            message: "Too many requests. Please try again later.",
+          },
+        })
+        return
+      }
+    }
+
+    throw new Error("expected rate limiter to return 429 within 40 requests")
+  })
+
+  // Security guard (wave-3): X-Forwarded-For leftmost value is client-controlled.
+  // An attacker can set X-Forwarded-For: <fake-ip> to rotate IPs and bypass the
+  // per-IP rate limit.  The route must use the LAST (proxy-appended) value, so
+  // that spoofed leading entries do not defeat the limit.
+  //
+  // This test verifies that a request with a multi-hop X-Forwarded-For header
+  // where the first value differs per-request but the last value (the trusted
+  // proxy entry) is fixed still hits the rate limit using the last value.
+  ;(HAS_RATE_LIMIT ? it : it.skip)(
+    "rate limit is enforced on the proxy-appended (last) X-Forwarded-For IP, not the client-injectable first value",
+    async () => {
+      // The trusted proxy IP is fixed across all requests — this is the value
+      // the route should use for rate-limit bucketing.
+      const trustedProxyIp = `trusted-proxy-${randomUUID()}`
+      const statuses: number[] = []
+
+      for (let i = 0; i < 30; i += 1) {
+        // Each request has a unique spoofed first hop but the same last hop.
+        // If the route incorrectly uses the first value, each request looks like
+        // a brand new IP and the rate limit is never reached.  If it correctly
+        // uses the last value, the window fills up and 429 is returned.
+        const spoofedFirstHop = `spoofed-${randomUUID()}`
+        const headers: Record<string, string> = {
+          "content-type": "application/json",
+          // Multi-value X-Forwarded-For: client-injected, proxy-appended
+          "x-forwarded-for": `${spoofedFirstHop}, ${trustedProxyIp}`,
+        }
+        const req = new Request("http://localhost/api/contact", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(VALID_PAYLOAD),
+        })
+        const response = await POST(req as Parameters<typeof POST>[0])
+        statuses.push(response.status)
+        if (response.status === 429) break
+      }
+
+      // Must hit 429 because the rate limiter sees the same trustedProxyIp
+      // on every request — not the rotating spoofed first-hop values.
+      expect(statuses).toContain(429)
+    }
+  )
 
   // Security guard added in PR #53: CRLF/control-char injection in string
   // fields must be stripped, not echoed back or forwarded to mail headers.
@@ -771,6 +855,20 @@ describe("mail service failure handling", () => {
     expect(json.error?.code).toBe("INTERNAL_ERROR")
     expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
     assertGenericSafeError(text, networkFailureMessage)
+    expect(sendContactMailMock).toHaveBeenCalledTimes(1)
+    expect(errorSpy).toHaveBeenCalled()
+  })
+
+  it("returns a safe 500 envelope when the mail layer throws a non-Error value", async () => {
+    const { response, text, json, errorSpy, sendContactMailMock } =
+      await submitWithMockedMailTransport(() => Promise.reject("transport exploded"))
+
+    expect(response.status).toBe(500)
+    expect(json.success).toBe(false)
+    expect(json.error?.code).toBe("INTERNAL_ERROR")
+    expect(json.error?.message).toBe("An unexpected error occurred. Please try again later.")
+    expect(text).not.toContain("transport exploded")
+    expect(text).not.toMatch(/at .+\(.+:\d+:\d+\)/)
     expect(sendContactMailMock).toHaveBeenCalledTimes(1)
     expect(errorSpy).toHaveBeenCalled()
   })
