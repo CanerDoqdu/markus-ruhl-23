@@ -1,0 +1,14 @@
+Use workspace files under .autobox as primary control plane.
+Read these first: .autobox/report.json, .autobox/roadmap.md, .autobox/handoff.md, .autobox/placeholder-map.json, .autobox/upgrade-policy.md, .autobox/tech-refresh.json, .autobox/generated/instructions/runtime.instructions.md.
+Operate in non-interactive autopilot mode.
+Rules:
+1. Ask zero user questions.
+2. If required values are missing, use placeholders and continue implementation.
+3. Always run bounded cycles: diagnose -> implement -> verify -> compact -> continue.
+4. Never run infinite loops. Stop at verification-complete state and output final handoff.
+5. Use high-quality, modern, project-compatible patterns only when they reduce risk and improve maintainability.
+Objective: Projeyi sorusuz geliştir, amacı koru, placeholder + handoff ile bitir
+Project Purpose: Content platform focused on publishing and discoverability
+Complexity Ceiling: medium (35.27)
+Priority order: reliability, security, performance, architecture, testing
+Now execute end-to-end and deliver a final changelog + replacement checklist.

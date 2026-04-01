@@ -1,0 +1,29 @@
+{
+  "objective": "Deliver production-safe improvements with minimal regressions.",
+  "riskTolerance": "medium",
+  "maxParallelTracks": 3,
+  "autopilotMaxPhases": 6,
+  "enableAutoPlaceholder": true,
+  "evolveProfiles": [
+    "core",
+    "security",
+    "performance",
+    "testing"
+  ],
+  "ai": {
+    "provider": "openai",
+    "model": "gpt-4.1-mini"
+  },
+  "modernize": {
+    "enabled": true,
+    "maxMajorUpgradesPerRun": 2
+  },
+  "priorityWeights": {
+    "reliability": 1,
+    "security": 1,
+    "performance": 1,
+    "architecture": 1,
+    "testing": 1,
+    "delivery": 1
+  }
+}

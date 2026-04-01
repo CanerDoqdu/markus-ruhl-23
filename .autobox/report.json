@@ -1,0 +1,124 @@
+{
+  "report": {
+    "projectName": "markus-ruhl",
+    "analyzedAt": "2026-03-06T18:31:12.457Z",
+    "purpose": "Content platform focused on publishing and discoverability",
+    "stack": [
+      "Next.js",
+      "React",
+      "TypeScript",
+      "Node package management"
+    ],
+    "ceiling": {
+      "score": 35.27,
+      "ceiling": "medium",
+      "factors": {
+        "fileCount": 71,
+        "dependencyCount": 27,
+        "extensionDiversity": 17,
+        "testSignals": 0
+      }
+    },
+    "metrics": {
+      "fileCount": 71,
+      "docsCount": 1,
+      "testSignals": 0,
+      "topExtensions": [
+        {
+          "ext": ".tsx",
+          "count": 30
+        },
+        {
+          "ext": ".ts",
+          "count": 8
+        },
+        {
+          "ext": ".jpg",
+          "count": 7
+        },
+        {
+          "ext": ".json",
+          "count": 5
+        },
+        {
+          "ext": ".png",
+          "count": 4
+        },
+        {
+          "ext": ".js",
+          "count": 3
+        },
+        {
+          "ext": ".glb",
+          "count": 2
+        },
+        {
+          "ext": ".webp",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "priorities": [
+    {
+      "key": "reliability",
+      "score": 5
+    },
+    {
+      "key": "security",
+      "score": 4
+    },
+    {
+      "key": "performance",
+      "score": 4
+    },
+    {
+      "key": "architecture",
+      "score": 4
+    },
+    {
+      "key": "testing",
+      "score": 4
+    },
+    {
+      "key": "delivery",
+      "score": 3
+    }
+  ],
+  "verify": null,
+  "generatedAssets": {
+    "generatedDir": "C:\\Users\\caner\\Desktop\\markus\\markus-ruhl-23\\.autobox\\generated",
+    "files": [
+      "C:\\Users\\caner\\Desktop\\markus\\markus-ruhl-23\\.autobox\\generated\\prompts\\project.prompt.md",
+      "C:\\Users\\caner\\Desktop\\markus\\markus-ruhl-23\\.autobox\\generated\\agents\\project.agent.md",
+      "C:\\Users\\caner\\Desktop\\markus\\markus-ruhl-23\\.autobox\\generated\\instructions\\runtime.instructions.md"
+    ]
+  },
+  "placeholders": {
+    "count": 1,
+    "keys": [
+      "NEXT_PUBLIC_SITE_URL"
+    ]
+  },
+  "autopilot": null,
+  "bootstrap": {
+    "filePath": "C:\\Users\\caner\\Desktop\\markus\\markus-ruhl-23\\.autobox\\AI-BOOTSTRAP-PROMPT.md",
+    "prompt": "You are AutoBox Execution AI for this repository.\nHard constraints:\n- Do not ask the user questions.\n- Use placeholders for missing secrets/3rd-party values.\n- Never run unbounded loops; use bounded phases and stop with final handoff.\n- If context grows too much, compact internal notes and keep only active plan, risks, and unresolved blockers.\n- Use .autobox/report.json, .autobox/roadmap.md, .autobox/handoff.md, .autobox/placeholder-map.json, .autobox/upgrade-policy.md, .autobox/tech-refresh.json as source of truth.\nProject: markus-ruhl\nPurpose: Content platform focused on publishing and discoverability\nComplexity: medium (35.27)\nPriority order: reliability, security, performance, architecture, testing\nObjective: Projeyi sorusuz geliştir, amacı koru, placeholder + handoff ile bitir\nDeliver: concrete implementation plan, patch strategy, verification sequence, and final replacement checklist.",
+    "oneLine": "You are AutoBox Execution AI for this repository. Hard constraints: - Do not ask the user questions. - Use placeholders for missing secrets/3rd-party values. - Never run unbounded loops; use bounded phases and stop with final handoff. - If context grows too much, compact internal notes and keep only active plan, risks, and unresolved blockers. - Use .autobox/report.json, .autobox/roadmap.md, .autobox/handoff.md, .autobox/placeholder-map.json, .autobox/upgrade-policy.md, .autobox/tech-refresh.json as source of truth. Project: markus-ruhl Purpose: Content platform focused on publishing and discoverability Complexity: medium (35.27) Priority order: reliability, security, performance, architecture, testing Objective: Projeyi sorusuz geliştir, amacı koru, placeholder + handoff ile bitir Deliver: concrete implementation plan, patch strategy, verification sequence, and final replacement checklist."
+  },
+  "copilotPack": {
+    "bootstrapPath": "C:\\Users\\caner\\Desktop\\markus\\markus-ruhl-23\\.autobox\\AI-BOOTSTRAP-PROMPT.md",
+    "oneShotPath": "C:\\Users\\caner\\Desktop\\markus\\markus-ruhl-23\\.autobox\\COPILOT-ONE-SHOT.txt",
+    "copied": true,
+    "prompt": "Use workspace files under .autobox as primary control plane.\nRead these first: .autobox/report.json, .autobox/roadmap.md, .autobox/handoff.md, .autobox/placeholder-map.json, .autobox/upgrade-policy.md, .autobox/tech-refresh.json, .autobox/generated/instructions/runtime.instructions.md.\nOperate in non-interactive autopilot mode.\nRules:\n1. Ask zero user questions.\n2. If required values are missing, use placeholders and continue implementation.\n3. Always run bounded cycles: diagnose -> implement -> verify -> compact -> continue.\n4. Never run infinite loops. Stop at verification-complete state and output final handoff.\n5. Use high-quality, modern, project-compatible patterns only when they reduce risk and improve maintainability.\nObjective: Projeyi sorusuz geliştir, amacı koru, placeholder + handoff ile bitir\nProject Purpose: Content platform focused on publishing and discoverability\nComplexity Ceiling: medium (35.27)\nPriority order: reliability, security, performance, architecture, testing\nNow execute end-to-end and deliver a final changelog + replacement checklist."
+  },
+  "aiExecution": null,
+  "modernization": {
+    "totalOutdated": 0,
+    "safeCount": 0,
+    "majorCount": 0,
+    "selectedMajor": [],
+    "safeCandidates": []
+  },
+  "generatedAt": "2026-03-06T18:31:12.489Z"
+}

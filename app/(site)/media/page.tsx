@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
-import Heading from "@/components/shared/Heading"
 import ScrollProgress from "@/components/motion/ScrollProgress"
 import Reveal from "@/components/motion/Reveal"
-import { motion } from "framer-motion"
 
 export const metadata: Metadata = {
   title: "Media",

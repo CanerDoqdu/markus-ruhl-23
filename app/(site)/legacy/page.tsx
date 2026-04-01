@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import Heading from "@/components/shared/Heading"
 import ScrollProgress from "@/components/motion/ScrollProgress"
 import Reveal from "@/components/motion/Reveal"
@@ -294,13 +293,10 @@ export default function LegacyPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-yellow/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                       <div className="relative z-10 w-20 h-20 flex items-center justify-center">
-                        <Image
-                          src={`/assets/img_${num}.svg`}
-                          alt={`Partner ${num}`}
-                          width={80}
-                          height={80}
-                          className="max-w-full max-h-full object-contain grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
-                        />
+                        {/* Placeholder: replace with actual partner logo */}
+                        <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-yellow/20 to-blue/20 flex items-center justify-center grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500">
+                          <span className="text-2xl font-black text-white/60">P{num}</span>
+                        </div>
                       </div>
                     </div>
 
