@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { useState, useEffect } from "react"
 import Reveal from "@/components/motion/Reveal"
 
@@ -14,6 +14,7 @@ const steps = [
 ]
 
 export default function Discipline() {
+  const shouldReduceMotion = useReducedMotion()
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function Discipline() {
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-3 tracking-tight">
             The Code
           </h2>
-          <p className="text-gray-500 text-lg mb-16 max-w-xl">
+          <p className="text-gray-300 text-lg mb-16 max-w-xl">
             The systematic algorithm behind championship-level mass.
           </p>
         </Reveal>
@@ -107,14 +108,8 @@ export default function Discipline() {
                           ${item.color}08 3px
                         )`,
                       }}
-                      animate={{ 
-                        backgroundPosition: ["0px 0px", "0px 10px"],
-                      }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
+                      animate={shouldReduceMotion ? undefined : { backgroundPosition: ["0px 0px", "0px 10px"] }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity, ease: "linear" }}
                     />
                   )}
 
@@ -146,11 +141,11 @@ export default function Discipline() {
                     >
                       {item.title}
                     </h3>
-                    <p className="text-gray-500 text-xs font-mono">{item.desc}</p>
+                    <p className="text-gray-300 text-xs font-mono">{item.desc}</p>
                   </div>
 
                   {/* Plus button */}
-                  <div className="absolute top-3 right-3 w-6 h-6 rounded-md border border-gray-700/50 bg-[#0a0a0c] flex items-center justify-center text-gray-600 text-xs cursor-pointer hover:border-gray-600 transition-all hover:bg-gray-800/50 z-20">
+                  <div className="absolute top-3 right-3 w-6 h-6 rounded-md border border-gray-700/50 bg-[#0a0a0c] flex items-center justify-center text-gray-400 text-xs cursor-pointer hover:border-gray-600 transition-all hover:bg-gray-800/50 z-20">
                     +
                   </div>
 
@@ -170,8 +165,8 @@ export default function Discipline() {
                         background: `conic-gradient(from 0deg, ${item.color}40, ${item.color}00)`,
                         filter: "blur(8px)",
                       }}
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                       animate={shouldReduceMotion ? undefined : { rotate: 360 }}
+                       transition={shouldReduceMotion ? { duration: 0 } : { duration: 8, repeat: Infinity, ease: "linear" }}
                     />
                   )}
                 </div>
@@ -179,7 +174,7 @@ export default function Discipline() {
                 {/* Mobile arrow */}
                 {i < steps.length - 1 && (
                   <div className="flex md:hidden justify-center py-2">
-                    <span className="text-gray-600 text-xs">↓</span>
+                    <span className="text-gray-400 text-xs">↓</span>
                   </div>
                 )}
               </motion.div>
@@ -203,3 +198,4 @@ export default function Discipline() {
     </section>
   )
 }
+

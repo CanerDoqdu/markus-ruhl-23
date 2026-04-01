@@ -1,0 +1,85 @@
+# CI pipeline: install -> lint -> build -> type-check -> test -> npm audit
+# Triggers on push to main and all pull requests.
+# Branch protection should require the "ci" job to pass before merging.
+#
+# Gate rationale:
+#   lint        — enforces code style and catches obvious errors early.
+#   build       — ensures next build succeeds; catches missing env, broken imports.
+#   type-check  — tsc --noEmit validates TypeScript without producing output.
+#   test        — vitest unit tests; must all pass before merge.
+#   audit       — blocks merge on any high/critical npm vulnerability (#65).
+#
+# Security: permissions are set to the minimum required (read-only) so the
+# GITHUB_TOKEN cannot be misused if a dependency or action is compromised.
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# Least-privilege token — this workflow only reads code, never writes or deploys.
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Install, Lint, Build, Test & Audit
+    runs-on: ubuntu-latest
+    # Hard cap: prevent runaway jobs from consuming runner minutes indefinitely.
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Pin to the LTS version declared in package.json engines field.
+          # Update both together to avoid CI/local version drift.
+          node-version: '20'
+          cache: 'npm'
+
+      # Gate: verify required build-time environment variables are configured before
+      # proceeding with the build. Runs on main branch pushes only (where the build
+      # output is what gets deployed). PRs from contributors may not have prod vars set.
+      # Configure NEXT_PUBLIC_SITE_URL in: Settings → Secrets and variables → Actions → Variables.
+      - name: Verify required environment variables
+        if: github.ref == 'refs/heads/main'
+        env:
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+        run: |
+          missing=()
+          [[ -z "${NEXT_PUBLIC_SITE_URL}" ]] && missing+=("NEXT_PUBLIC_SITE_URL")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::Missing required build-time environment variables: ${missing[*]}"
+            echo "::error::Set these in GitHub Actions Variables (Settings → Secrets and variables → Actions → Variables)."
+            echo "::error::See docs/regression-checklist.md §7 for the full variable reference."
+            exit 1
+          fi
+          echo "All required environment variables are present."
+
+      - name: Install dependencies
+        # npm ci is required (not npm install) for deterministic, lockfile-exact installs.
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Test
+        run: npm test
+
+      - name: Audit
+        # Fail on high or critical vulnerabilities — blocks merge on any high/critical finding.
+        # Threshold set to 'high' per policy decision in PR #65.
+        # Do NOT downgrade to 'moderate' or add continue-on-error without an explicit
+        # security review and a documented exception in this file.
+        run: npm audit --audit-level=high

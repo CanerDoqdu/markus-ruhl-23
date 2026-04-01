@@ -45,7 +45,7 @@ const PROGRAMS = [
 
 export default function TrainingPrograms() {
   return (
-    <section className="relative py-32 px-6 bg-gradient-to-b from-main via-blue/5 to-main">
+    <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-gradient-to-b from-main via-blue/5 to-main">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(88,103,182,0.08),transparent_60%)]" />
       
       <div className="relative max-w-7xl mx-auto">
@@ -53,7 +53,7 @@ export default function TrainingPrograms() {
           TRAINING PROGRAMS
         </Heading>
 
-        <p className="text-center text-gray-400 text-xl max-w-3xl mx-auto mb-20">
+        <p className="text-center text-gray-400 text-base sm:text-xl max-w-3xl mx-auto mb-20">
           Proven training methodologies based on decades of professional experience.
           No gimmicks, no shortcuts—just results.
         </p>
@@ -91,7 +91,7 @@ export default function TrainingPrograms() {
                   {/* Features */}
                   <div className="mb-6">
                     <h4 className="text-sm font-bold text-yellow mb-3">KEY FEATURES</h4>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {program.features.map((feature) => (
                         <div key={feature} className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 bg-yellow rounded-full flex-shrink-0" />
@@ -103,7 +103,7 @@ export default function TrainingPrograms() {
 
                   {/* Principles */}
                   <div className="mt-auto pt-6 border-t border-gray-800">
-                    <h4 className="text-xs font-bold text-gray-500 mb-2">PRINCIPLES</h4>
+                    <h4 className="text-xs font-bold text-gray-300 mb-2">PRINCIPLES</h4>
                     <div className="space-y-1">
                       {program.principles.map((principle) => (
                         <p key={principle} className="text-gray-400 text-xs">
@@ -121,3 +121,4 @@ export default function TrainingPrograms() {
     </section>
   )
 }
+

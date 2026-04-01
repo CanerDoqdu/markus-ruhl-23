@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { SOCIAL_LINKS } from "@/lib/constants"
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
@@ -27,12 +27,13 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
 }
 
 export default function FinalCTA() {
+  const shouldReduceMotion = useReducedMotion()
   return (
     <section className="relative bg-main overflow-hidden">
       {/* Top border glow */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow/30 to-transparent" />
 
-      <div className="max-w-[1400px] mx-auto px-6 py-32 lg:py-40">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-24 sm:py-32 lg:py-40">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           {/* Left — Main CTA text */}
           <div>
@@ -42,28 +43,28 @@ export default function FinalCTA() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-gray-600 mb-6">
+              <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-gray-400 mb-6">
                 Be Part of It
               </p>
 
-              <h2 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tight mb-6">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tight mb-6">
                 <span className="text-white">Join</span>
                 <br />
                 <span className="text-white">The </span>
                 <span className="text-yellow">Legacy</span>
               </h2>
 
-              <p className="text-gray-500 text-base leading-relaxed max-w-md mb-10">
+              <p className="text-gray-300 text-base leading-relaxed max-w-md mb-10">
                 Connect with the community. Stay updated on training insights,
                 events, and the journey that never stops.
               </p>
 
               {/* CTA Button */}
-              <motion.a
-                href="/contact"
-                whileHover={{ x: 6 }}
-                className="group inline-flex items-center gap-4"
-              >
+                <motion.a
+                  href="/contact"
+                  whileHover={shouldReduceMotion ? undefined : { x: 6 }}
+                  className="group inline-flex items-center gap-4"
+                >
                 <span className="inline-flex items-center justify-center w-14 h-14 rounded-full border-2 border-yellow text-yellow group-hover:bg-yellow group-hover:text-main transition-all duration-300">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -109,13 +110,13 @@ export default function FinalCTA() {
                     <p className="text-white text-sm font-bold tracking-wide group-hover:text-yellow transition-colors">
                       {social.name}
                     </p>
-                    <p className="text-gray-600 text-[11px] font-mono truncate">
+                    <p className="text-gray-400 text-[11px] font-mono truncate">
                       {social.href.replace("https://", "")}
                     </p>
                   </div>
 
                   {/* Arrow */}
-                  <div className="text-gray-700 group-hover:text-yellow transition-colors">
+                  <div className="text-gray-300 group-hover:text-yellow transition-colors">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
                     </svg>
@@ -130,7 +131,7 @@ export default function FinalCTA() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="text-gray-700 text-[11px] font-mono uppercase tracking-[0.3em] mt-8 text-right"
+              className="text-gray-300 text-[11px] font-mono uppercase tracking-[0.3em] mt-8 text-right"
             >
               Discipline · Power · Legacy
             </motion.p>
@@ -140,3 +141,4 @@ export default function FinalCTA() {
     </section>
   )
 }
+

@@ -302,7 +302,7 @@ export default function LegacyPage() {
 
                     {/* Bottom label */}
                     <div className="mt-3 text-center">
-                      <span className="text-[9px] font-mono text-gray-600 uppercase tracking-[0.2em] group-hover:text-yellow/60 transition-colors duration-300">
+                      <span className="text-[9px] font-mono text-gray-400 uppercase tracking-[0.2em] group-hover:text-yellow/60 transition-colors duration-300">
                         Partner 0{num}
                       </span>
                     </div>
@@ -313,7 +313,7 @@ export default function LegacyPage() {
 
             {/* Stats bar */}
             <Reveal delay={0.3}>
-              <div className="mt-16 flex items-center justify-center gap-12 md:gap-20">
+              <div className="mt-16 flex items-center justify-center gap-8 md:gap-20 flex-wrap">
                 {[
                   { value: "15+", label: "Years" },
                   { value: "10+", label: "Partners" },
@@ -345,3 +345,4 @@ export default function LegacyPage() {
     </>
   )
 }
+

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useRef, useState, type KeyboardEvent } from "react"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import Image from "next/image"
 
 interface TimelinePhase {
@@ -73,10 +73,44 @@ const TIMELINE_PHASES: TimelinePhase[] = [
 
 export default function InteractiveTimeline() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const shouldReduceMotion = useReducedMotion()
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const activePhase = TIMELINE_PHASES[activeIndex]
 
+  const focusAndSelectTab = (nextIndex: number) => {
+    setActiveIndex(nextIndex)
+    tabRefs.current[nextIndex]?.focus()
+  }
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      event.preventDefault()
+      const nextIndex = (index + 1) % TIMELINE_PHASES.length
+      focusAndSelectTab(nextIndex)
+      return
+    }
+
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      event.preventDefault()
+      const nextIndex = (index - 1 + TIMELINE_PHASES.length) % TIMELINE_PHASES.length
+      focusAndSelectTab(nextIndex)
+      return
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault()
+      focusAndSelectTab(0)
+      return
+    }
+
+    if (event.key === "End") {
+      event.preventDefault()
+      focusAndSelectTab(TIMELINE_PHASES.length - 1)
+    }
+  }
+
   return (
-    <section className="relative bg-main py-32 px-6 overflow-hidden">
+    <section className="relative bg-main py-24 sm:py-32 px-4 sm:px-6 overflow-hidden">
       {/* Background grid pattern */}
       <div className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -95,19 +129,20 @@ export default function InteractiveTimeline() {
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-20 gap-6"
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6 }}
+           className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-16 sm:mb-20 gap-6"
         >
           <div>
             <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4 }}
               className="text-xs font-mono text-[#FFFF92]/60 uppercase tracking-[0.3em] mb-4"
             >
               The Journey
             </motion.p>
-            <h2 className="text-5xl lg:text-7xl font-black leading-[0.95]">
+             <h2 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[0.95]">
               <span className="block bg-gradient-to-r from-[#FFFF92] via-[#FFD700] to-[#FFFF92] bg-clip-text text-transparent">
                 Career
               </span>
@@ -116,7 +151,7 @@ export default function InteractiveTimeline() {
               </span>
             </h2>
           </div>
-          <p className="text-gray-500 text-sm max-w-md leading-relaxed font-light lg:text-right">
+          <p className="text-gray-300 text-sm max-w-md leading-relaxed font-light lg:text-right">
             From 54.5kg beginner to the most massive bodybuilder in history.
             A 14-year journey of relentless growth and dominance.
           </p>
@@ -127,24 +162,33 @@ export default function InteractiveTimeline() {
 
           {/* LEFT — Numbered navigation list */}
           <div className="lg:col-span-4 lg:border-r lg:border-gray-800/50 lg:pr-8">
-            <div className="space-y-1">
+            <div className="space-y-1" role="tablist" aria-label="Career timeline phases" aria-orientation="vertical">
               {TIMELINE_PHASES.map((phase, index) => (
                 <motion.button
                   key={phase.year}
                   onClick={() => setActiveIndex(index)}
+                  onKeyDown={(event) => handleTabKeyDown(event, index)}
+                  ref={(element) => {
+                    tabRefs.current[index] = element
+                  }}
+                  id={`timeline-tab-${index}`}
+                  role="tab"
+                  aria-selected={activeIndex === index}
+                  aria-controls={`timeline-panel-${index}`}
+                  tabIndex={activeIndex === index ? 0 : -1}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.08 }}
-                  className={`w-full group flex items-center gap-4 py-4 px-4 rounded-lg text-left transition-all duration-300 ${
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, delay: index * 0.08 }}
+                  className={`w-full group flex items-center gap-4 py-4 px-4 rounded-lg text-left transition-all duration-300 motion-reduce:transition-none ${
                     activeIndex === index
                       ? "bg-gradient-to-r from-[#FFFF92]/10 to-transparent border-l-2 border-[#FFFF92]"
                       : "hover:bg-white/[0.02] border-l-2 border-transparent"
                   }`}
                 >
                   {/* Number */}
-                  <span className={`text-xs font-mono w-6 transition-colors duration-300 ${
-                    activeIndex === index ? "text-[#FFFF92]" : "text-gray-700"
+                    <span className={`text-xs font-mono w-6 transition-colors duration-300 motion-reduce:transition-none ${
+                    activeIndex === index ? "text-[#FFFF92]" : "text-gray-400"
                   }`}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
@@ -152,19 +196,19 @@ export default function InteractiveTimeline() {
                   {/* Year + Title */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
-                      <span className={`text-sm font-bold transition-colors duration-300 ${
-                        activeIndex === index ? "text-[#FFFF92]" : "text-gray-500 group-hover:text-gray-300"
+                      <span className={`text-sm font-bold transition-colors duration-300 motion-reduce:transition-none ${
+                        activeIndex === index ? "text-[#FFFF92]" : "text-gray-400 group-hover:text-gray-300"
                       }`}>
                         {phase.year}
                       </span>
-                      <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors duration-300 ${
-                        activeIndex === index ? "text-[#5867B6]" : "text-gray-700"
+                      <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors duration-300 motion-reduce:transition-none ${
+                        activeIndex === index ? "text-[#5867B6]" : "text-gray-400"
                       }`}>
                         {phase.phase}
                       </span>
                     </div>
-                    <p className={`text-sm truncate transition-colors duration-300 ${
-                      activeIndex === index ? "text-white" : "text-gray-600 group-hover:text-gray-400"
+                    <p className={`text-sm truncate transition-colors duration-300 motion-reduce:transition-none ${
+                      activeIndex === index ? "text-white" : "text-gray-400 group-hover:text-gray-400"
                     }`}>
                       {phase.title}
                     </p>
@@ -172,11 +216,11 @@ export default function InteractiveTimeline() {
 
                   {/* Arrow */}
                   <svg
-                    className={`w-4 h-4 transition-all duration-300 ${
+                    className={`w-4 h-4 transition-all duration-300 motion-reduce:transition-none ${
                       activeIndex === index
                         ? "text-[#FFFF92] translate-x-0 opacity-100"
-                        : "text-gray-700 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
-                    }`}
+                        : "text-gray-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
+                     }`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -190,13 +234,14 @@ export default function InteractiveTimeline() {
               <div className="h-[2px] bg-gray-800 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-[#FFFF92] to-[#5867B6]"
-                  animate={{ width: `${((activeIndex + 1) / TIMELINE_PHASES.length) * 100}%` }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  style={{ transformOrigin: "left center" }}
+                  animate={{ scaleX: (activeIndex + 1) / TIMELINE_PHASES.length }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
                 />
               </div>
               <div className="flex justify-between mt-2">
-                <span className="text-[10px] font-mono text-gray-700">1990</span>
-                <span className="text-[10px] font-mono text-gray-700">2009</span>
+                <span className="text-[10px] font-mono text-gray-300">1990</span>
+                <span className="text-[10px] font-mono text-gray-300">2009</span>
               </div>
             </div>
           </div>
@@ -209,7 +254,7 @@ export default function InteractiveTimeline() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4 }}
                 className="relative w-full max-w-sm"
               >
                 {activePhase.image ? (
@@ -218,6 +263,7 @@ export default function InteractiveTimeline() {
                       src={activePhase.image}
                       alt={activePhase.title}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
                       className="object-cover"
                       quality={85}
                     />
@@ -240,18 +286,18 @@ export default function InteractiveTimeline() {
                       <motion.div
                         className="absolute w-48 h-48 rounded-full border border-[#FFFF92]/10"
                         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
-                        transition={{ duration: 3, repeat: Infinity }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity }}
                       />
                       <motion.div
                         className="absolute w-32 h-32 rounded-full border border-[#5867B6]/20"
                         animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.3, 0.1] }}
-                        transition={{ duration: 3, repeat: Infinity }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: 3, repeat: Infinity }}
                       />
                       <div className="text-center z-10">
                         <p className="text-5xl font-black bg-gradient-to-b from-[#FFFF92] to-[#FFFF92]/30 bg-clip-text text-transparent">
                           {activePhase.stat.value}
                         </p>
-                        <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest mt-2">
+                        <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest mt-2">
                           {activePhase.stat.label}
                         </p>
                       </div>
@@ -268,7 +314,7 @@ export default function InteractiveTimeline() {
                         <div className="w-1 h-8 bg-[#5867B6] rounded-full" />
                         <div>
                           <p className="text-white font-bold text-sm">{activePhase.title}</p>
-                          <p className="text-gray-500 text-xs">{activePhase.year}</p>
+                          <p className="text-gray-300 text-xs">{activePhase.year}</p>
                         </div>
                       </div>
                     </div>
@@ -283,10 +329,13 @@ export default function InteractiveTimeline() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeIndex}
+                id={`timeline-panel-${activeIndex}`}
+                role="tabpanel"
+                aria-labelledby={`timeline-tab-${activeIndex}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4 }}
                 className="space-y-8"
               >
                 {/* Phase badge */}
@@ -310,13 +359,13 @@ export default function InteractiveTimeline() {
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-500 text-sm leading-relaxed">
+                <p className="text-gray-300 text-sm leading-relaxed">
                   {activePhase.description}
                 </p>
 
                 {/* Highlights */}
                 <div className="space-y-3">
-                  <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">
+                  <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">
                     Key Highlights
                   </p>
                   {activePhase.highlights.map((highlight, i) => (
@@ -324,7 +373,7 @@ export default function InteractiveTimeline() {
                       key={highlight}
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: i * 0.1 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.3, delay: i * 0.1 }}
                       className="flex items-center gap-3"
                     >
                       <div className="w-1.5 h-1.5 bg-[#FFFF92]/60 rotate-45 flex-shrink-0" />
@@ -340,7 +389,7 @@ export default function InteractiveTimeline() {
                       <p className="text-2xl font-black text-[#FFFF92]">
                         {activePhase.stat.value}
                       </p>
-                      <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">
+                      <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">
                         {activePhase.stat.label}
                       </p>
                     </div>
@@ -362,7 +411,7 @@ export default function InteractiveTimeline() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.6, delay: 0.2 }}
           className="mt-24 pt-12 border-t border-gray-800/30"
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -377,14 +426,14 @@ export default function InteractiveTimeline() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, delay: i * 0.1 }}
                 className="text-center lg:text-left"
               >
                 <div className="flex items-baseline gap-1 justify-center lg:justify-start">
                   <span className="text-3xl font-black text-white">{stat.value}</span>
                   <span className="text-sm font-mono text-[#FFFF92]">{stat.suffix}</span>
                 </div>
-                <p className="text-xs font-mono text-gray-600 uppercase tracking-wider mt-1">{stat.label}</p>
+                <p className="text-xs font-mono text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -393,3 +442,4 @@ export default function InteractiveTimeline() {
     </section>
   )
 }
+

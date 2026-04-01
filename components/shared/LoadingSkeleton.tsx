@@ -1,8 +1,9 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 
 export default function LoadingSkeleton() {
+  const shouldReduceMotion = useReducedMotion()
   return (
     <div className="fixed inset-0 bg-main z-50 flex items-center justify-center">
       <div className="text-center">
@@ -16,7 +17,7 @@ export default function LoadingSkeleton() {
           <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight">
             MARKUS RÜHL
           </h1>
-          <p className="text-gray-500 text-sm md:text-base mt-2 font-mono">
+          <p className="text-gray-300 text-sm md:text-base mt-2 font-mono">
             Loading Excellence...
           </p>
         </motion.div>
@@ -27,7 +28,7 @@ export default function LoadingSkeleton() {
             className="h-full bg-gradient-to-r from-[#5867B6] via-[#FFFF92] to-[#FF6B35]"
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
-            transition={{ duration: 2, ease: "easeInOut" }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 2, ease: "easeInOut" }}
           />
         </div>
 
@@ -42,8 +43,8 @@ export default function LoadingSkeleton() {
                 scale: [0.8, 1.2, 0.8],
               }}
               transition={{
-                duration: 1.5,
-                repeat: Infinity,
+                duration: shouldReduceMotion ? 0 : 1.5,
+                repeat: shouldReduceMotion ? 0 : Infinity,
                 delay: i * 0.2,
               }}
             />

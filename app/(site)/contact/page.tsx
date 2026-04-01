@@ -42,16 +42,16 @@ export default function ContactPage() {
   return (
     <>
       <ScrollProgress />
-      <main>
+      <main id="main-content">
         {/* Hero */}
-        <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-main via-yellow/10 to-main px-6 pt-32">
+        <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-main via-yellow/10 to-main px-4 sm:px-6 pt-28 sm:pt-32">
           <Reveal className="text-center">
-            <h1 className="text-6xl md:text-8xl font-black mb-6 leading-none">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-none">
               <span className="text-white">GET IN</span>
               <br />
               <span className="text-yellow glow-text-yellow">TOUCH</span>
             </h1>
-            <p className="text-gray-400 text-xl max-w-2xl mx-auto">
+            <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto">
               Questions about training programs, collaborations, or general inquiries?
               We'd love to hear from you.
             </p>
@@ -59,7 +59,7 @@ export default function ContactPage() {
         </section>
 
         {/* Contact Methods */}
-        <section className="relative py-32 px-6 bg-main">
+        <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-main">
           <div className="max-w-6xl mx-auto">
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
               {CONTACT_INFO.map((info) => (
@@ -69,7 +69,7 @@ export default function ContactPage() {
                     <h3 className="text-lg font-bold text-white mb-2">
                       {info.title}
                     </h3>
-                    <p className="text-gray-500 text-sm mb-2">{info.description}</p>
+                    <p className="text-gray-300 text-sm mb-2">{info.description}</p>
                     <p className="text-yellow font-semibold text-sm">{info.value}</p>
                   </div>
                 </StaggerItem>
@@ -82,19 +82,19 @@ export default function ContactPage() {
         <ContactForm />
 
         {/* Social Links */}
-        <section className="relative py-32 px-6 bg-gradient-to-b from-main to-gray-900">
+        <section className="relative py-24 sm:py-32 px-4 sm:px-6 bg-gradient-to-b from-main to-gray-900">
           <div className="max-w-4xl mx-auto text-center">
             <Reveal>
               <Heading className="text-center mb-12">
                 CONNECT
               </Heading>
-              <p className="text-gray-400 text-lg mb-12">
+              <p className="text-gray-400 text-base sm:text-lg mb-12">
                 Follow the journey across social platforms
               </p>
             </Reveal>
 
             <Reveal delay={0.2}>
-              <div className="flex gap-6 justify-center">
+              <div className="flex gap-4 sm:gap-6 justify-center flex-wrap">
                 {SOCIAL_LINKS.map((social) => (
                   <a
                     key={social.name}
@@ -117,3 +117,4 @@ export default function ContactPage() {
     </>
   )
 }
+
