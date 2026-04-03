@@ -10,7 +10,7 @@
 <br />
 
 <p align="center">
-  This is the official personal website of <strong>Markus Rühl</strong> — one of the most recognizable physiques in professional bodybuilding history.<br /><br />
+  This is the unofficial personal website of <strong>Markus Rühl</strong> — one of the most recognizable physiques in professional bodybuilding history.<br /><br />
   The goal wasn't just to build a website. It was to build an <em>experience</em>.<br />
   Something that hits you the moment you land on the page — cinematic, heavy, and unmistakably Markus.<br /><br />
   The site takes you through his story, his training philosophy, his career highlights, and lets you get in touch — all wrapped in a dark, premium aesthetic with animations that feel intentional, not decorative.
