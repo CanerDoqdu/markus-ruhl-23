@@ -1,5 +1,4 @@
-<img src="public/gym1.png" width="210" align="left" />
-<img src="public/gym2.png" width="210" align="right" />
+<img src="public/gym1.png" width="210" align="left" /><img src="public/gym2.png" width="210" align="right" />
 
 <p align="center"><big><big><big><big><strong>MARKUS RUHL</strong></big></big></big></big></p>
 <p align="center">Signature Digital Experience</p>
