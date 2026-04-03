@@ -4,7 +4,7 @@
 <p align="center"><big><big><big><big><strong>MARKUS RUHL</strong></big></big></big></big></p>
 <p align="center">Signature Digital Experience</p>
 
-<br clear="all" />
+
 
 ---
 
