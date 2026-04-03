@@ -1,4 +1,4 @@
-<img src="public/gym1.png" width="210" align="left" /><img src="public/gym2.png" width="210" align="right" />
+<img src="public/gym4left.png" width="210" align="left" /><img src="public/gym3.png" width="210" align="right" />
 
 <p align="center"><big><big><big><big><strong>MARKUS RUHL</strong></big></big></big></big></p>
 <p align="center">Signature Digital Experience</p>
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="public/markusbrand.gif" width="320" alt="Markus Brand" />
+  <img src="public/markusbrand.gif" width="100%" alt="Markus Brand" />
 </p>
 
 ---
@@ -59,7 +59,7 @@ The training page has a custom SVG connection flow — nodes linking training pr
 <br />
 
 <p align="center">
-  <img src="public/3d.gif" width="320" alt="3D Code Bird" />
+  <img src="public/flyinganimation.gif" width="320" alt="Flying Animation" />
 </p>
 
 ---
