@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="public/horses.gif" width="320" alt="Horses" />
+  <img src="public/markusbrand.gif" width="320" alt="Markus Brand" />
 </p>
 
 ---
