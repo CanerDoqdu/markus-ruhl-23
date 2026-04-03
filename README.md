@@ -1,10 +1,17 @@
-<img src="public/gym1.png" width="200" align="left" />
-<img src="public/gym2.png" width="200" align="right" />
-
-<h1 align="center"><big><big>MARKUS RUHL</big></big></h1>
-<h4 align="center">Signature Digital Experience</h4>
-
-<br clear="all" />
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr valign="bottom">
+    <td width="200" align="left" valign="bottom" style="border:none;padding:0">
+      <img src="public/gym1.png" width="200" style="display:block;vertical-align:bottom" />
+    </td>
+    <td align="center" valign="middle" style="border:none;padding:0 16px">
+      <h1><big><big>MARKUS RUHL</big></big></h1>
+      <h4>Signature Digital Experience</h4>
+    </td>
+    <td width="200" align="right" valign="bottom" style="border:none;padding:0">
+      <img src="public/gym2.png" width="200" style="display:block;vertical-align:bottom" />
+    </td>
+  </tr>
+</table>
 
 ---
 
