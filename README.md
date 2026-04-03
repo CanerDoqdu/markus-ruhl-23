@@ -1,17 +1,10 @@
-<table width="100%" cellspacing="0" cellpadding="0" border="0">
-  <tr valign="bottom">
-    <td width="220" align="left" valign="bottom">
-      <img src="public/gym1.png" width="210" />
-    </td>
-    <td align="center" valign="bottom">
-      <h1><big><big>MARKUS RUHL</big></big></h1>
-      <h4>Signature Digital Experience</h4>
-    </td>
-    <td width="220" align="right" valign="bottom">
-      <img src="public/gym2.png" width="210" />
-    </td>
-  </tr>
-</table>
+<img src="public/gym1.png" width="200" align="left" />
+<img src="public/gym2.png" width="200" align="right" />
+
+<h1 align="center"><big><big>MARKUS RUHL</big></big></h1>
+<h4 align="center">Signature Digital Experience</h4>
+
+<br clear="all" />
 
 ---
 
@@ -24,7 +17,9 @@
   The site takes you through his story, his training philosophy, his career highlights, and lets you get in touch — all wrapped in a dark, premium aesthetic with animations that feel intentional, not decorative.
 </p>
 
-<br />
+<p align="center">
+  <img src="public/3d.gif" width="320" alt="3D Code Bird" />
+</p>
 
 ---
 
@@ -66,16 +61,6 @@ The training page has a custom SVG connection flow — nodes linking training pr
 
 ---
 
-<br />
-
-<p align="center">
-  <img src="public/3d.gif" width="320" alt="3D Code Bird" />
-</p>
-
-<br />
-
----
-
 <p align="center">
 Next.js 15 &nbsp;·&nbsp; React &nbsp;·&nbsp; TypeScript &nbsp;·&nbsp; Tailwind CSS &nbsp;·&nbsp; Framer Motion &nbsp;·&nbsp; GSAP &nbsp;·&nbsp; Three.js
 </p>
@@ -84,10 +69,4 @@ Next.js 15 &nbsp;·&nbsp; React &nbsp;·&nbsp; TypeScript &nbsp;·&nbsp; Tailwin
 
 <p align="center">
 
-```bash
-npm install && npm run dev
-```
-
-`http://localhost:3000`
-</p>
 
