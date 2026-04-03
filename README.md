@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="public/3d.gif" width="320" alt="3D Code Bird" />
+  <img src="public/horses.gif" width="320" alt="Horses" />
 </p>
 
 ---
@@ -57,6 +57,10 @@ The contact route runs on Next.js Edge Runtime with an in-memory sliding-window 
 The training page has a custom SVG connection flow — nodes linking training principles like a dependency graph. It's built with pure SVG and CSS animations, not a diagram library, which keeps it fully responsive and easy to theme.
 
 <br />
+
+<p align="center">
+  <img src="public/3d.gif" width="320" alt="3D Code Bird" />
+</p>
 
 ---
 
